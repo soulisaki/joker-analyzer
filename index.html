@@ -43,6 +43,16 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 td,th{text-align:left;padding:8px 5px;border-bottom:1px solid var(--line)}
 th{color:var(--muted);font-weight:600}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px}
+
+/* AI Joker Assistant */
+.ai-controls{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+.ai-controls label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.ai-controls select,.ai-controls input{width:100%;background:#0e1726;color:#f4f7fb;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:15px}
+.ai-metric{background:#0e1726;border-radius:10px;padding:10px}
+.ai-metric b{display:block;font-size:20px}
+.ai-metric span{font-size:11px;color:var(--muted)}
+.ai-pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#203047;color:#cfe3f3;font-size:11px;margin:2px}
+@media(max-width:420px){.ai-controls{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -112,6 +122,33 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 Όλοι οι δυνατοί συνδυασμοί έχουν την ίδια πιθανότητα στην επόμενη κλήρωση.
 </p>
 <div id="out"></div>
+</section>
+
+<section class="card" id="aiAssistant">
+<h2>AI Joker Assistant</h2>
+<p class="muted">Στατιστική ανάλυση του αποθηκευμένου ιστορικού, δημιουργία συνδυασμών και ιστορική δοκιμή στρατηγικών. Λειτουργεί τοπικά στη συσκευή, χωρίς εξωτερική υπηρεσία ή API key.</p>
+<div class="ai-controls">
+  <label>Στρατηγική
+    <select id="aiStrategy">
+      <option value="balanced">Ισορροπημένη</option>
+      <option value="frequent">Συχνότεροι αριθμοί</option>
+      <option value="overdue">Μεγαλύτερη καθυστέρηση</option>
+      <option value="hybrid">Συχνότητα και καθυστέρηση</option>
+      <option value="random">Τυχαία βάση σύγκρισης</option>
+    </select>
+  </label>
+  <label>Προτεινόμενες στήλες
+    <input id="aiCount" type="number" min="1" max="50" value="10">
+  </label>
+</div>
+<div class="actions">
+  <button id="aiAnalyze">Ανάλυση ιστορικού</button>
+  <button id="aiGenerate">Δημιουργία προτάσεων</button>
+  <button id="aiBacktest">Ιστορική δοκιμή</button>
+</div>
+<p class="status" id="aiStatus">Πάτησε «Ανάλυση ιστορικού» για να ξεκινήσεις.</p>
+<div id="aiOutput"></div>
+<p class="muted">Σημαντικό: οι προηγούμενες συχνότητες και καθυστερήσεις δεν κάνουν έναν αριθμό πιθανότερο στην επόμενη κλήρωση. Κάθε συγκεκριμένη στήλη 5+1 έχει την ίδια πιθανότητα. Η βαθμολογία είναι κριτήριο κατάταξης, όχι πρόβλεψη.</p>
 </section>
 
 <section class="card">
@@ -702,6 +739,243 @@ function checkMyNumbers(){
 
   $("myResult").innerHTML=html;
 }
+
+/* AI Joker Assistant — στατιστική ανάλυση και έλεγχος στρατηγικών */
+function aiGetMetrics(history){
+  const ordered=history.slice().sort(compareDraws);
+  const freq=Array(46).fill(0),jokerFreq=Array(21).fill(0);
+  const last=Array(46).fill(-1),jokerLast=Array(21).fill(-1);
+  const pairs=new Map();
+
+  ordered.forEach((d,i)=>{
+    d.numbers.forEach(n=>{freq[n]++;last[n]=i;});
+    jokerFreq[d.joker]++;jokerLast[d.joker]++;
+
+    for(let a=0;a<5;a++)for(let b=a+1;b<5;b++){
+      const k=d.numbers[a]+"-"+d.numbers[b];
+      pairs.set(k,(pairs.get(k)||0)+1);
+    }
+  });
+
+  const gap=Array(46).fill(ordered.length);
+  const jokerGap=Array(21).fill(ordered.length);
+
+  for(let n=1;n<=45;n++)
+    if(last[n]>=0)gap[n]=ordered.length-1-last[n];
+
+  for(let n=1;n<=20;n++)
+    if(jokerLast[n]>=0)jokerGap[n]=ordered.length-1-jokerLast[n];
+
+  return {ordered,freq,jokerFreq,gap,jokerGap,pairs,total:ordered.length};
+}
+
+function aiScale(values,max){
+  const used=values.slice(1,max+1);
+  const lo=Math.min(...used),hi=Math.max(...used);
+  const out=Array(max+1).fill(.5);
+
+  for(let n=1;n<=max;n++)
+    out[n]=hi===lo ? 0.5 : (values[n]-lo)/(hi-lo);
+
+  return out;
+}
+
+function aiScores(m,strategy){
+  const f=aiScale(m.freq,45),g=aiScale(m.gap,45);
+  const jf=aiScale(m.jokerFreq,20),jg=aiScale(m.jokerGap,20);
+  const ns=Array(46).fill(0),js=Array(21).fill(0);
+
+  for(let n=1;n<=45;n++){
+    if(strategy==="frequent")ns[n]=f[n];
+    else if(strategy==="overdue")ns[n]=g[n];
+    else if(strategy==="hybrid")ns[n]=.55*f[n]+.45*g[n];
+    else if(strategy==="random")ns[n]=Math.random();
+    else{
+      const expected=m.total*5/45;
+      ns[n]=1/(1+Math.abs(m.freq[n]-expected)/(Math.sqrt(Math.max(1,expected))+1));
+    }
+  }
+
+  for(let n=1;n<=20;n++){
+    if(strategy==="frequent")js[n]=jf[n];
+    else if(strategy==="overdue")js[n]=jg[n];
+    else if(strategy==="hybrid")js[n]=.55*jf[n]+.45*jg[n];
+    else if(strategy==="random")js[n]=Math.random();
+    else{
+      const expected=m.total/20;
+      js[n]=1/(1+Math.abs(m.jokerFreq[n]-expected)/(Math.sqrt(Math.max(1,expected))+1));
+    }
+  }
+
+  return {ns,js};
+}
+
+function aiComboScore(d,m,scores,strategy){
+  let score=d.numbers.reduce((sum,n)=>sum+scores.ns[n],0)+scores.js[d.joker];
+
+  if(strategy==="balanced"){
+    const odd=d.numbers.filter(n=>n%2===1).length;
+    const low=d.numbers.filter(n=>n<=22).length;
+    const sum=d.numbers.reduce((a,b)=>a+b,0);
+    score-=Math.abs(odd-2.5)*.18+Math.abs(low-2.5)*.18+Math.abs(sum-115)/180;
+  }
+
+  let pairTotal=0;
+  for(let a=0;a<5;a++)for(let b=a+1;b<5;b++)
+    pairTotal+=m.pairs.get(d.numbers[a]+"-"+d.numbers[b])||0;
+
+  return score+Math.log1p(pairTotal)/30;
+}
+
+function aiRandomCombo(){
+  const numbers=[];
+
+  while(numbers.length<5){
+    const n=1+Math.floor(Math.random()*45);
+    if(!numbers.includes(n))numbers.push(n);
+  }
+
+  numbers.sort((a,b)=>a-b);
+  return {numbers,joker:1+Math.floor(Math.random()*20)};
+}
+
+function aiBuildSuggestions(history,strategy,count){
+  const m=aiGetMetrics(history),scores=aiScores(m,strategy);
+  const used=new Set(history.map(key)),pool=new Map();
+  const target=Math.max(800,count*180);
+  let tries=0;
+
+  while(pool.size<target&&tries<target*8){
+    tries++;
+    const d=aiRandomCombo(),k=key(d);
+    if(used.has(k)||pool.has(k))continue;
+    pool.set(k,{...d,score:aiComboScore(d,m,scores,strategy)});
+  }
+
+  const ranked=Array.from(pool.values()).sort((a,b)=>b.score-a.score);
+  const chosen=[];
+
+  for(const d of ranked){
+    if(chosen.length>=count)break;
+    if(chosen.every(x=>d.numbers.filter(n=>x.numbers.includes(n)).length<4))
+      chosen.push(d);
+  }
+
+  return {chosen,totalCandidates:ranked.length};
+}
+
+function aiAnalyze(){
+  if(draws.length<20){
+    $("aiStatus").textContent="Χρειάζονται τουλάχιστον 20 αποθηκευμένες κληρώσεις.";
+    return;
+  }
+
+  const m=aiGetMetrics(draws);
+  const nums=Array.from({length:45},(_,i)=>i+1);
+  const top=nums.slice().sort((a,b)=>m.freq[b]-m.freq[a]).slice(0,8);
+  const low=nums.slice().sort((a,b)=>m.freq[a]-m.freq[b]).slice(0,8);
+  const overdue=nums.slice().sort((a,b)=>m.gap[b]-m.gap[a]).slice(0,8);
+  const jokers=Array.from({length:20},(_,i)=>i+1)
+    .sort((a,b)=>m.jokerFreq[b]-m.jokerFreq[a]).slice(0,5);
+
+  $("aiOutput").innerHTML=`
+    <div class="grid">
+      <div class="ai-metric"><b>${m.total.toLocaleString("el-GR")}</b><span>Κληρώσεις που αναλύθηκαν</span></div>
+      <div class="ai-metric"><b>${m.pairs.size.toLocaleString("el-GR")}</b><span>Ζεύγη αριθμών που καταγράφηκαν</span></div>
+    </div>
+    <h3>Συχνότεροι βασικοί αριθμοί</h3><p>${top.map(n=>n+" ("+m.freq[n]+" φορές)").join(" · ")}</p>
+    <h3>Λιγότερο συχνοί βασικοί αριθμοί</h3><p>${low.map(n=>n+" ("+m.freq[n]+" φορές)").join(" · ")}</p>
+    <h3>Μεγαλύτερη καθυστέρηση</h3><p>${overdue.map(n=>n+" ("+m.gap[n]+" κληρώσεις)").join(" · ")}</p>
+    <h3>Συχνότεροι αριθμοί Τζόκερ</h3><p>${jokers.map(n=>n+" ("+m.jokerFreq[n]+" φορές)").join(" · ")}</p>
+  `;
+
+  $("aiStatus").textContent="Η ανάλυση ολοκληρώθηκε σε "+m.total+" κληρώσεις.";
+}
+
+function aiGenerate(){
+  if(draws.length<20){aiAnalyze();return;}
+
+  const strategy=$("aiStrategy").value;
+  const count=Math.max(1,Math.min(50,Number($("aiCount").value)||10));
+  const result=aiBuildSuggestions(draws,strategy,count);
+
+  const labels={
+    balanced:"Ισορροπημένη",
+    frequent:"Συχνότεροι αριθμοί",
+    overdue:"Μεγαλύτερη καθυστέρηση",
+    hybrid:"Συχνότητα και καθυστέρηση",
+    random:"Τυχαία βάση σύγκρισης"
+  };
+
+  $("aiStatus").textContent="Δημιουργήθηκαν "+result.chosen.length+" προτάσεις με τη στρατηγική "+labels[strategy]+".";
+
+  $("aiOutput").innerHTML="<h3>Προτεινόμενες στήλες — "+labels[strategy]+"</h3>"+
+    result.chosen.map((d,i)=>'<div class="combo"><b>Πρόταση '+(i+1)+'</b><span class="ai-pill">Βαθμός '+d.score.toFixed(3)+'</span>'+balls(d.numbers,d.joker)+'</div>').join("")+
+    '<p class="small">Βαθμός κατάταξης, όχι πιθανότητα νίκης. Ελέγχθηκαν '+result.totalCandidates+' υποψήφιοι συνδυασμοί.</p>';
+}
+
+function aiBacktest(){
+  const ordered=sortedDraws();
+
+  if(ordered.length<150){
+    $("aiStatus").textContent="Χρειάζονται τουλάχιστον 150 κληρώσεις για την ιστορική δοκιμή.";
+    return;
+  }
+
+  const strategy=$("aiStrategy").value;
+  const tests=Math.min(100,Math.max(40,Math.floor(ordered.length*.1)));
+  const start=ordered.length-tests;
+
+  let stratHits=0,randomHits=0,stratThree=0,randomThree=0,stratJ=0,randomJ=0,done=0;
+
+  for(let i=start;i<ordered.length;i++){
+    const train=ordered.slice(0,i),actual=ordered[i];
+    const suggested=aiBuildSuggestions(train,strategy,10).chosen;
+    const randoms=[];
+
+    while(randoms.length<10)randoms.push(aiRandomCombo());
+
+    if(!suggested.length)continue;
+
+    const best=list=>Math.max(...list.map(d=>d.numbers.filter(n=>actual.numbers.includes(n)).length));
+    const sh=best(suggested),rh=best(randoms);
+
+    stratHits+=sh;
+    randomHits+=rh;
+
+    if(sh>=3)stratThree++;
+    if(rh>=3)randomThree++;
+
+    if(suggested.some(d=>d.joker===actual.joker))stratJ++;
+    if(randoms.some(d=>d.joker===actual.joker))randomJ++;
+
+    done++;
+  }
+
+  if(!done){
+    $("aiStatus").textContent="Δεν ολοκληρώθηκε η δοκιμή.";
+    return;
+  }
+
+  $("aiStatus").textContent="Η ιστορική δοκιμή ολοκληρώθηκε σε "+done+" παλαιότερες κληρώσεις.";
+
+  $("aiOutput").innerHTML=`
+    <h3>Σύγκριση με 10 τυχαίες στήλες ανά κλήρωση</h3>
+    <div class="grid">
+      <div class="ai-metric"><b>${(stratHits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί — στρατηγική</span></div>
+      <div class="ai-metric"><b>${(randomHits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί — τυχαία</span></div>
+      <div class="ai-metric"><b>${stratThree}</b><span>Κληρώσεις με 3+ βασικούς — στρατηγική</span></div>
+      <div class="ai-metric"><b>${randomThree}</b><span>Κληρώσεις με 3+ βασικούς — τυχαία</span></div>
+      <div class="ai-metric"><b>${stratJ}</b><span>Τζόκερ που βρέθηκε σε τουλάχιστον μία στήλη — στρατηγική</span></div>
+      <div class="ai-metric"><b>${randomJ}</b><span>Τζόκερ που βρέθηκε σε τουλάχιστον μία στήλη — τυχαία</span></div>
+    </div>
+    <p class="small">Σε κάθε δοκιμή η στρατηγική χρησιμοποίησε μόνο κληρώσεις πριν από την κλήρωση ελέγχου. Τα αποτελέσματα είναι ιστορικά και τυχαία· δεν αποδεικνύουν πλεονέκτημα στις μελλοντικές κληρώσεις.</p>
+  `;
+}
+
+$("aiAnalyze").onclick=aiAnalyze;
+$("aiGenerate").onclick=aiGenerate;
+$("aiBacktest").onclick=aiBacktest;
 
 /* Δημιουργία τυχαίων στηλών */
 $("make").onclick=()=>{
