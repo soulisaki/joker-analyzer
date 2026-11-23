@@ -152,7 +152,7 @@ function normalize(o){
      new Set(nums).size!==5||
      nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
      !Number.isInteger(j)||j<1||j>20||
-     !Number.isFinite(no)||no<=0)return null;
+     !Number.isFinite(no)||no<0)return null;
 
   return{
     drawNo:no,
@@ -181,6 +181,15 @@ function parseDate(value){
   return isNaN(d)?null:d;
 }
 
+function compareDraws(a,b){
+  const an=Number(a.drawNo)||0;
+  const bn=Number(b.drawNo)||0;
+  if(an!==bn)return an-bn;
+  const ad=parseDate(a.drawTime)?.getTime()||0;
+  const bd=parseDate(b.drawTime)?.getTime()||0;
+  return ad-bd;
+}
+
 function fmt(value){
   const d=parseDate(value);
   return d?d.toLocaleDateString("el-GR"):"—";
@@ -194,7 +203,7 @@ function balls(a,j){
 }
 
 function sortedDraws(){
-  return draws.slice().sort((a,b)=>a.drawNo-b.drawNo);
+  return draws.slice().sort(compareDraws);
 }
 
 function render(){
@@ -206,7 +215,7 @@ function render(){
   renderStats();
 
   const recent=draws.slice()
-    .sort((a,b)=>b.drawNo-a.drawNo)
+    .sort((a,b)=>compareDraws(b,a))
     .slice(0,20);
 
   $("recent").innerHTML=recent.length
@@ -312,19 +321,31 @@ async function getJSON(url){
 }
 
 function mergeDraws(list){
-  const map=new Map(draws.map(d=>[String(d.drawNo),d]));
-  let added=0;
+  const map=new Map();
 
+  function drawKey(d){
+    const no=Number(d.drawNo);
+    if(no>0)return "N:"+no;
+    const parsed=parseDate(d.drawTime);
+    const dateKey=parsed?parsed.toISOString().slice(0,10):String(d.drawTime||"");
+    return "D:"+dateKey;
+  }
+
+  for(const d of draws){
+    map.set(drawKey(d),d);
+  }
+
+  let added=0;
   for(const d of list){
     if(!d)continue;
-    const id=String(d.drawNo);
+    const id=drawKey(d);
     if(!map.has(id)){
       map.set(id,d);
       added++;
     }
   }
 
-  draws=Array.from(map.values()).sort((a,b)=>a.drawNo-b.drawNo);
+  draws=Array.from(map.values()).sort(compareDraws);
   if(added)save();
   return added;
 }
@@ -449,8 +470,19 @@ async function syncHistory(){
 
         const valid=arr.map(parseDraw).filter(Boolean);
         totalValid+=valid.length;
-        totalAdded+=mergeDraws(valid);
 
+        if(arr.length>0 && valid.length===0){
+          windowFailed=true;
+          $("status").textContent=
+            "Η πηγή επέστρεψε εγγραφές, αλλά δεν αναγνωρίστηκαν οι κληρώσεις. Η λήψη σταματά για αυτό το διάστημα.";
+          break;
+        }
+
+        if(valid.length!==arr.length){
+          windowFailed=true;
+        }
+
+        totalAdded+=mergeDraws(valid);
         render();
 
         if(arr.length===0)break;
@@ -510,7 +542,7 @@ function checkMyNumbers(){
 
   nums.sort((a,b)=>a-b);
 
-  const ordered=draws.slice().sort((a,b)=>b.drawNo-a.drawNo);
+  const ordered=draws.slice().sort((a,b)=>compareDraws(b,a));
   const exact=[];
   const sameFive=[];
   const numberStats=[];
@@ -528,7 +560,7 @@ function checkMyNumbers(){
     const appearances=ordered.filter(d=>d.numbers.includes(n));
     const last=appearances[0]||null;
     const since=last
-      ?ordered.findIndex(d=>d.drawNo===last.drawNo)
+      ?ordered.indexOf(last)
       :null;
 
     numberStats.push({
@@ -542,7 +574,7 @@ function checkMyNumbers(){
   const jokerDraws=ordered.filter(d=>d.joker===joker);
   const lastJ=jokerDraws[0]||null;
   const jokerSince=lastJ
-    ?ordered.findIndex(d=>d.drawNo===lastJ.drawNo)
+    ?ordered.indexOf(lastJ)
     :null;
 
   let html=`
