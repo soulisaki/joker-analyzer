@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="el">
 <head>
 <meta charset="UTF-8">
@@ -15,23 +15,33 @@ header p{margin:0;color:var(--muted);font-size:13px}
 main{max-width:760px;margin:auto;padding:15px;display:grid;gap:13px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px}
 h2{font-size:17px;margin:0 0 12px}
+h3{font-size:14px;margin:15px 0 7px}
 .muted{color:var(--muted);font-size:13px;line-height:1.5}
-button,.filelabel{border:0;border-radius:11px;background:var(--accent);color:#07151a;font-weight:700;padding:12px 14px;font-size:14px;cursor:pointer}
+button,.filelabel{border:0;border-radius:11px;background:var(--accent);color:#07151a;font-weight:700;padding:12px 14px;font-size:14px;cursor:pointer;display:inline-block}
 button:disabled{opacity:.5}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.5}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .stat{background:#0e1726;border-radius:12px;padding:12px}
 .stat b{display:block;font-size:22px}
 .stat span{color:var(--muted);font-size:12px}
-input[type=number]{width:75px;background:#0e1726;color:white;border:1px solid var(--line);border-radius:9px;padding:10px}
+input[type=number]{width:65px;background:#0e1726;color:white;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px}
 input[type=file]{display:none}
 .row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0}
+.number-inputs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.number-inputs input{width:48px;text-align:center;padding:10px 3px}
+.number-inputs .joker-input{border-color:#f1c75b}
 .balls{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .ball{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#e9eef6;color:#152235;font-weight:800;font-size:14px}
 .j{background:#f1c75b}
 .combo{padding:12px 0;border-bottom:1px solid var(--line)}
 .combo:last-child{border:0}
+.result{background:#0e1726;border-radius:12px;padding:12px;margin-top:10px;line-height:1.6;font-size:14px}
+.result strong{color:var(--accent)}
+.small{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td,th{text-align:left;padding:8px 5px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px}
 </style>
 </head>
@@ -39,34 +49,44 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 
 <header>
 <h1>JOKER ANALYZER</h1>
-<p>Ιστορικό · Στατιστικά · Δημιουργία συνδυασμών</p>
+<p>Ιστορικό · Προσωπικοί αριθμοί · Στατιστικά · Συνδυασμοί</p>
 </header>
 
 <main>
+
 <section class="card">
 <h2>Βάση κληρώσεων</h2>
 <div class="grid">
-<div class="stat"><b id="total">0</b><span>Κληρώσεις αποθηκευμένες</span></div>
-<div class="stat"><b id="lastSync">—</b><span>Τελευταίος έλεγχος</span></div>
+  <div class="stat"><b id="total">0</b><span>Αποθηκευμένες κληρώσεις</span></div>
+  <div class="stat"><b id="lastSync">—</b><span>Τελευταίος επιτυχημένος έλεγχος</span></div>
 </div>
 <p class="status" id="status">Έτοιμο για χρήση.</p>
 <div class="actions">
-<button id="sync">Έλεγχος νέων αποτελεσμάτων</button>
-<label class="filelabel" for="csv">Εισαγωγή ιστορικού CSV</label>
-<input id="csv" type="file" accept=".csv,.txt">
+  <button id="sync">Έλεγχος νέων κληρώσεων</button>
+  <button id="historySync">Λήψη ιστορικού από το 1997</button>
+  <label class="filelabel" for="csv">Εισαγωγή ιστορικού CSV</label>
+  <input id="csv" type="file" accept=".csv,.txt">
 </div>
-<p class="muted">Ο έλεγχος γίνεται όταν πατάς το κουμπί. Για πλήρες ιστορικό, μπορείς να εισαγάγεις αρχείο CSV.</p>
+<p class="muted">
+Ο καθημερινός έλεγχος γίνεται όταν ανοίγεις την εφαρμογή.
+Η λήψη πλήρους ιστορικού γίνεται ξεχωριστά και μπορεί να χρειαστεί χρόνο.
+Οι ήδη αποθηκευμένες κληρώσεις δεν διαγράφονται.
+</p>
 </section>
 
 <section class="card">
-<h2>Δημιουργία συνδυασμών</h2>
-<div class="row">
-Στήλες:
-<input id="count" type="number" min="1" max="100" value="10">
-<button id="make">Δημιουργία</button>
+<h2>Έλεγχος δικών σου αριθμών</h2>
+<p class="muted">Συμπλήρωσε τους 5 βασικούς αριθμούς και τον αριθμό Τζόκερ.</p>
+<div class="number-inputs">
+  <input id="my1" type="number" min="1" max="45" placeholder="1">
+  <input id="my2" type="number" min="1" max="45" placeholder="2">
+  <input id="my3" type="number" min="1" max="45" placeholder="3">
+  <input id="my4" type="number" min="1" max="45" placeholder="4">
+  <input id="my5" type="number" min="1" max="45" placeholder="5">
+  <input id="myJ" class="joker-input" type="number" min="1" max="20" placeholder="Τζ">
 </div>
-<p class="muted">Απορρίπτονται οι ακριβείς συνδυασμοί 5+1 που υπάρχουν στην αποθηκευμένη ιστορική βάση. Αυτό δεν αυξάνει την πιθανότητα μελλοντικής νίκης.</p>
-<div id="out"></div>
+<button id="checkMy">Έλεγχος αριθμών</button>
+<div id="myResult" class="result muted">Περιμένω τους αριθμούς σου.</div>
 </section>
 
 <section class="card">
@@ -75,56 +95,95 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </section>
 
 <section class="card">
+<h2>Δημιουργία συνδυασμών</h2>
+<div class="row">
+  Στήλες:
+  <input id="count" type="number" min="1" max="100" value="10">
+  <button id="make">Δημιουργία</button>
+</div>
+<p class="muted">
+Απορρίπτονται ακριβείς συνδυασμοί 5+1 που υπάρχουν ήδη στο αποθηκευμένο ιστορικό.
+Όλοι οι δυνατοί συνδυασμοί έχουν την ίδια πιθανότητα στην επόμενη κλήρωση.
+</p>
+<div id="out"></div>
+</section>
+
+<section class="card">
 <h2>Πρόσφατες κληρώσεις</h2>
 <div id="recent" class="muted">Δεν υπάρχουν ακόμη δεδομένα.</div>
 </section>
+
 </main>
 
-<footer>Οι στατιστικές περιγράφουν προηγούμενες κληρώσεις· δεν προβλέπουν την επόμενη.</footer>
+<footer>
+Οι στατιστικές περιγράφουν προηγούμενες κληρώσεις και δεν προβλέπουν τα επόμενα αποτελέσματα.
+</footer>
 
 <script>
 const $=id=>document.getElementById(id);
+
 const STORE="jokerAnalyzerDraws_v1";
+const SYNC_STORE="jokerAnalyzerLastSync_v1";
+const AUTO_STORE="jokerAnalyzerAutoCheck_v1";
+
 let draws=[];
 
 try{
-  draws=JSON.parse(localStorage.getItem(STORE)||"[]");
-  if(!Array.isArray(draws))draws=[];
+  const saved=JSON.parse(localStorage.getItem(STORE)||"[]");
+  if(Array.isArray(saved)) draws=saved.map(normalize).filter(Boolean);
 }catch(e){
   draws=[];
 }
 
-const save=()=>localStorage.setItem(STORE,JSON.stringify(draws));
+function save(){
+  localStorage.setItem(STORE,JSON.stringify(draws));
+}
 
 function normalize(o){
   if(!o)return null;
 
-  let nums=(Array.isArray(o.numbers)?o.numbers:[])
+  const nums=(Array.isArray(o.numbers)?o.numbers:[])
     .map(Number).sort((a,b)=>a-b);
 
-  let j=Number(o.joker);
-  let no=Number(o.drawNo);
+  const j=Number(o.joker);
+  const no=Number(o.drawNo);
 
   if(nums.length!==5||
-    new Set(nums).size!==5||
-    nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
-    !Number.isInteger(j)||j<1||j>20||
-    !Number.isFinite(no))return null;
+     new Set(nums).size!==5||
+     nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
+     !Number.isInteger(j)||j<1||j>20||
+     !Number.isFinite(no)||no<=0)return null;
 
   return{
     drawNo:no,
-    drawTime:o.drawTime||"",
+    drawTime:String(o.drawTime||""),
     numbers:nums,
     joker:j
   };
 }
 
-const key=d=>[...d.numbers].sort((a,b)=>a-b).join(",")+"|"+d.joker;
+function key(d){
+  return d.numbers.join(",")+"|"+d.joker;
+}
 
-function fmt(x){
-  if(!x)return "—";
-  let d=new Date(x);
-  return isNaN(d)?"—":d.toLocaleDateString("el-GR");
+function baseKey(d){
+  return d.numbers.join(",");
+}
+
+function parseDate(value){
+  if(!value)return null;
+  const s=String(value);
+
+  let m=s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));
+
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+
+function fmt(value){
+  const d=parseDate(value);
+  return d?d.toLocaleDateString("el-GR"):"—";
 }
 
 function balls(a,j){
@@ -134,11 +193,19 @@ function balls(a,j){
   </div>`;
 }
 
+function sortedDraws(){
+  return draws.slice().sort((a,b)=>a.drawNo-b.drawNo);
+}
+
 function render(){
   $("total").textContent=draws.length.toLocaleString("el-GR");
+
+  const last=localStorage.getItem(SYNC_STORE);
+  $("lastSync").textContent=last?new Date(last).toLocaleString("el-GR"):"—";
+
   renderStats();
 
-  let recent=draws.slice()
+  const recent=draws.slice()
     .sort((a,b)=>b.drawNo-a.drawNo)
     .slice(0,20);
 
@@ -149,205 +216,404 @@ function render(){
         <span class="muted">${fmt(d.drawTime)}</span>
         ${balls(d.numbers,d.joker)}
       </div>`).join("")
-    :"Δεν υπάρχουν δεδομένα.";
+    :"Δεν υπάρχουν ακόμη δεδομένα.";
 }
 
 function renderStats(){
   if(!draws.length){
-    $("stats").textContent="Δεν υπάρχουν δεδομένα. Κάνε εισαγωγή CSV.";
+    $("stats").textContent="Δεν υπάρχουν δεδομένα. Κάνε συγχρονισμό ή εισαγωγή CSV.";
     return;
   }
 
-  let freq=Array(46).fill(0);
-  let jokerFreq=Array(21).fill(0);
-  let last=Array(46).fill(-1);
+  const freq=Array(46).fill(0);
+  const jokerFreq=Array(21).fill(0);
+  const ordered=sortedDraws();
 
-  draws.forEach((d,i)=>{
-    d.numbers.forEach(n=>{
-      freq[n]++;
-      last[n]=i;
-    });
+  ordered.forEach(d=>{
+    d.numbers.forEach(n=>freq[n]++);
     jokerFreq[d.joker]++;
   });
 
-  let nums=Array.from({length:45},(_,i)=>i+1);
-  let top=nums.slice().sort((a,b)=>freq[b]-freq[a]).slice(0,10);
-  let jokers=Array.from({length:20},(_,i)=>i+1)
+  const nums=Array.from({length:45},(_,i)=>i+1);
+  const top=nums.slice().sort((a,b)=>freq[b]-freq[a]).slice(0,10);
+  const jokers=Array.from({length:20},(_,i)=>i+1)
     .sort((a,b)=>jokerFreq[b]-jokerFreq[a]).slice(0,8);
-  let cold=nums.slice().sort((a,b)=>last[a]-last[b]).slice(0,8);
 
   $("stats").innerHTML=`
     <b>Συχνότεροι βασικοί αριθμοί</b>
-    <p>${top.map(n=>`${n} (${freq[n]})`).join(" · ")}</p>
+    <p>${top.map(n=>`${n} (${freq[n]} φορές)`).join(" · ")}</p>
     <b>Συχνότεροι αριθμοί Τζόκερ</b>
-    <p>${jokers.map(n=>`${n} (${jokerFreq[n]})`).join(" · ")}</p>
-    <b>Μεγαλύτερη αποχή από τελευταία εμφάνιση</b>
-    <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
+    <p>${jokers.map(n=>`${n} (${jokerFreq[n]} φορές)`).join(" · ")}</p>
+    <p class="small">Οι μετρήσεις αφορούν τις ${ordered.length} αποθηκευμένες κληρώσεις.</p>`;
 }
 
-/* ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
+/* Αναγνώριση μορφής αποτελέσματος ΟΠΑΠ */
 function parseDraw(x){
   if(!x||typeof x!=="object")return null;
 
+  if(x.draw&&typeof x.draw==="object")x=x.draw;
+
   const winning=x.winningNumbers||{};
-  const raw=Array.isArray(winning.list)?winning.list:
-    (Array.isArray(x.results)?x.results:
-    (Array.isArray(x.numbers)?x.numbers:[]));
+  let raw=[];
+
+  if(Array.isArray(winning.list))raw=winning.list;
+  else if(Array.isArray(x.results))raw=x.results;
+  else if(Array.isArray(x.numbers))raw=x.numbers;
 
   let joker=null;
 
   if(Array.isArray(winning.bonus)&&winning.bonus.length){
     joker=winning.bonus[0];
-  }else if(typeof winning.bonus==="number"||typeof winning.bonus==="string"){
+  }else if(winning.bonus!==undefined&&winning.bonus!==null){
     joker=winning.bonus;
+  }else if(x.jokerNumber!==undefined){
+    joker=x.jokerNumber;
+  }else if(x.joker!==undefined){
+    joker=x.joker;
   }
 
-  if(joker===null||joker===""){
-    joker=raw[5]??x.jokerNumber??x.joker??null;
+  if((joker===null||joker==="")&&raw.length>=6){
+    joker=raw[5];
   }
 
   return normalize({
-    drawNo:x.drawID??x.drawId??x.drawNo??x.draw,
+    drawNo:x.drawId??x.drawID??x.drawNo??x.draw,
     drawTime:x.drawTime||x.drawDate||x.date||"",
     numbers:raw.slice(0,5),
     joker:joker
   });
 }
 
-/* ΣΥΓΧΡΟΝΙΣΜΟΣ ΤΩΝ 20 ΤΕΛΕΥΤΑΙΩΝ ΚΛΗΡΩΣΕΩΝ */
-async function sync(){
+function extractArray(body){
+  if(Array.isArray(body))return body;
+  if(Array.isArray(body.content))return body.content;
+  if(Array.isArray(body.draws))return body.draws;
+  if(Array.isArray(body.data))return body.data;
+  if(body.last&&typeof body.last==="object")return [body.last];
+  if(body.draw&&typeof body.draw==="object")return [body.draw];
+  throw new Error("Δεν αναγνωρίστηκε η μορφή της απάντησης.");
+}
+
+async function getJSON(url){
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),25000);
+
+  try{
+    const response=await fetch(url,{
+      headers:{accept:"application/json"},
+      signal:controller.signal
+    });
+
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    return await response.json();
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+
+function mergeDraws(list){
+  const map=new Map(draws.map(d=>[String(d.drawNo),d]));
+  let added=0;
+
+  for(const d of list){
+    if(!d)continue;
+    const id=String(d.drawNo);
+    if(!map.has(id)){
+      map.set(id,d);
+      added++;
+    }
+  }
+
+  draws=Array.from(map.values()).sort((a,b)=>a.drawNo-b.drawNo);
+  if(added)save();
+  return added;
+}
+
+/* Έλεγχος πρόσφατων αποτελεσμάτων */
+async function syncRecent(){
   $("sync").disabled=true;
-  $("status").textContent="Λήψη των 20 τελευταίων κληρώσεων από τον ΟΠΑΠ…";
+  $("status").textContent="Γίνεται έλεγχος των πρόσφατων αποτελεσμάτων…";
 
   try{
     const url="https://api.opap.gr/draws/v3.0/5104/last/20?status=results";
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),20000);
+    const body=await getJSON(url);
+    const arr=extractArray(body);
 
-    let response;
-    try{
-      response=await fetch(url,{
-        headers:{accept:"application/json"},
-        signal:controller.signal
-      });
-    }finally{
-      clearTimeout(timeout);
+    const valid=arr.map(parseDraw).filter(Boolean);
+
+    if(!valid.length){
+      throw new Error("Η πηγή απάντησε, αλλά δεν αναγνωρίστηκαν οι αριθμοί.");
     }
 
-    if(!response.ok){
-      throw new Error("HTTP "+response.status);
-    }
+    const added=mergeDraws(valid);
+    const now=new Date().toISOString();
 
-    const body=await response.json();
-    let arr=[];
-
-    if(Array.isArray(body)){
-      arr=body;
-    }else if(Array.isArray(body.content)){
-      arr=body.content;
-    }else if(Array.isArray(body.draws)){
-      arr=body.draws;
-    }else if(Array.isArray(body.data)){
-      arr=body.data;
-    }else{
-      throw new Error("Η απάντηση του ΟΠΑΠ δεν είναι λίστα κληρώσεων.");
-    }
-
-    const valid=[];
-    const invalid=[];
-    const sourceSeen=new Set();
-
-    arr.forEach(item=>{
-      const d=parseDraw(item);
-
-      if(!d){
-        invalid.push({
-          drawId:item?.drawId??item?.drawID??item?.drawNo??null,
-          fields:Object.keys(item||{})
-        });
-        return;
-      }
-
-      const id=String(d.drawNo);
-      if(!sourceSeen.has(id)){
-        sourceSeen.add(id);
-        valid.push(d);
-      }
-    });
-
-    const savedById=new Map(
-      draws.map(d=>[String(d.drawNo),d])
-    );
-
-    let added=0;
-
-    valid.forEach(d=>{
-      const id=String(d.drawNo);
-      if(!savedById.has(id)){
-        savedById.set(id,d);
-        added++;
-      }
-    });
-
-    draws=Array.from(savedById.values())
-      .sort((a,b)=>a.drawNo-b.drawNo);
-
-    if(added>0) save();
+    localStorage.setItem(SYNC_STORE,now);
+    localStorage.setItem(AUTO_STORE,new Date().toDateString());
 
     render();
 
-    const report={
-      "Κληρώσεις που επέστρεψε ο ΟΠΑΠ":arr.length,
-      "Κληρώσεις που αναγνωρίστηκαν":valid.length,
-      "Νέες κληρώσεις που αποθηκεύτηκαν":added,
-      "Σύνολο αποθηκευμένων":draws.length,
-      "Αριθμοί κληρώσεων που λήφθηκαν":valid.map(d=>d.drawNo),
-      "Απορριφθείσες εγγραφές":invalid
-    };
-
     $("status").textContent=
-      "Ο συγχρονισμός ολοκληρώθηκε. Νέες κληρώσεις: "+added+
-      "\n\n"+JSON.stringify(report,null,2);
-
-    $("lastSync").textContent=
-      new Date().toLocaleDateString("el-GR");
+      `Ο έλεγχος ολοκληρώθηκε.\n`+
+      `Κληρώσεις που επέστρεψε η πηγή: ${arr.length}\n`+
+      `Κληρώσεις που αναγνωρίστηκαν: ${valid.length}\n`+
+      `Νέες κληρώσεις: ${added}\n`+
+      `Σύνολο αποθηκευμένων: ${draws.length}`;
 
   }catch(e){
-    $("status").textContent=
-      "Αποτυχία συγχρονισμού: "+(e.message||"Άγνωστο σφάλμα");
-    $("lastSync").textContent=
-      new Date().toLocaleDateString("el-GR");
+    $("status").textContent="Αποτυχία ελέγχου: "+(e.message||"Άγνωστο σφάλμα");
   }finally{
     $("sync").disabled=false;
   }
 }
 
-$("sync").onclick=sync;
+/* Βοηθητικές ημερομηνίες για λήψη ιστορικού */
+function isoDate(d){
+  return d.toISOString().slice(0,10);
+}
 
+function addDays(date,days){
+  const d=new Date(date);
+  d.setUTCDate(d.getUTCDate()+days);
+  return d;
+}
+
+/*
+  Προσπάθεια ανάκτησης παλαιότερων κληρώσεων.
+  Ανάκτηση σε μικρά χρονικά διαστήματα και σε σελίδες.
+  Κάθε εγγραφή ελέγχεται πριν αποθηκευτεί.
+*/
+async function syncHistory(){
+  if(!confirm("Να ξεκινήσει η προσπάθεια λήψης του ιστορικού από το 1997; Η διαδικασία μπορεί να διαρκέσει αρκετά.")){
+    return;
+  }
+
+  $("historySync").disabled=true;
+  $("sync").disabled=true;
+
+  let totalAdded=0;
+  let totalRead=0;
+  let totalValid=0;
+  let failedWindows=0;
+
+  try{
+    const start=new Date(Date.UTC(1997,0,1));
+    const today=new Date();
+    const end=new Date(Date.UTC(today.getFullYear(),today.getMonth(),today.getDate()));
+
+    let from=new Date(start);
+
+    while(from<=end){
+      const to=addDays(from,89);
+      const finalTo=to>end?end:to;
+
+      const fromStr=isoDate(from);
+      const toStr=isoDate(finalTo);
+
+      $("status").textContent=
+        `Λήψη ιστορικού: ${fromStr} έως ${toStr}\n`+
+        `Αποθηκευμένες κληρώσεις: ${draws.length}`;
+
+      let page=0;
+      let windowFailed=false;
+
+      while(true){
+        const url=
+          `https://api.opap.gr/draws/v3.0/5104/draw-date/${fromStr}/${toStr}`+
+          `?status=results&page=${page}&limit=180&sort=asc`;
+
+        let body;
+
+        try{
+          body=await getJSON(url);
+        }catch(e){
+          windowFailed=true;
+          $("status").textContent=
+            `Πρόβλημα λήψης στο διάστημα ${fromStr} έως ${toStr}.\n`+
+            `${e.message||e}`;
+          break;
+        }
+
+        let arr;
+
+        try{
+          arr=extractArray(body);
+        }catch(e){
+          windowFailed=true;
+          $("status").textContent=
+            `Μη αναγνωρίσιμη απάντηση για ${fromStr} έως ${toStr}.`;
+          break;
+        }
+
+        totalRead+=arr.length;
+
+        const valid=arr.map(parseDraw).filter(Boolean);
+        totalValid+=valid.length;
+        totalAdded+=mergeDraws(valid);
+
+        render();
+
+        if(arr.length===0)break;
+
+        const totalPages=Number(body.totalPages);
+        if(Number.isFinite(totalPages)&&totalPages>0){
+          page++;
+          if(page>=totalPages)break;
+        }else{
+          if(arr.length<180)break;
+          page++;
+        }
+
+        if(page>100)break;
+      }
+
+      if(windowFailed)failedWindows++;
+
+      from=addDays(finalTo,1);
+    }
+
+    render();
+
+    $("status").textContent=
+      `Η διαδικασία λήψης ολοκληρώθηκε.\n`+
+      `Εγγραφές που επέστρεψε η πηγή: ${totalRead}\n`+
+      `Κληρώσεις που αναγνωρίστηκαν: ${totalValid}\n`+
+      `Νέες κληρώσεις που αποθηκεύτηκαν: ${totalAdded}\n`+
+      `Σύνολο αποθηκευμένων: ${draws.length}\n`+
+      `Διαστήματα με σφάλμα: ${failedWindows}\n\n`+
+      (failedWindows===0
+        ?"Δεν αναφέρθηκαν αποτυχίες στα διαστήματα που ελέγχθηκαν. Αυτό δεν αποτελεί ανεξάρτητη πιστοποίηση πληρότητας του αρχείου."
+        :"Η λήψη δεν ήταν πλήρης. Μπορείς να ξαναδοκιμάσεις ή να εισαγάγεις ιστορικό CSV.");
+
+  }catch(e){
+    $("status").textContent="Σφάλμα ιστορικού: "+(e.message||e);
+  }finally{
+    $("historySync").disabled=false;
+    $("sync").disabled=false;
+  }
+}
+
+/* Προσωπικοί αριθμοί */
+function checkMyNumbers(){
+  const ids=["my1","my2","my3","my4","my5"];
+  const nums=ids.map(id=>Number($(id).value));
+  const joker=Number($("myJ").value);
+
+  if(nums.some((n,i)=>
+      !Number.isInteger(n)||n<1||n>45)||
+      new Set(nums).size!==5||
+      !Number.isInteger(joker)||joker<1||joker>20){
+    $("myResult").innerHTML=
+      "Συμπλήρωσε 5 διαφορετικούς αριθμούς από 1 έως 45 και έναν αριθμό Τζόκερ από 1 έως 20.";
+    return;
+  }
+
+  nums.sort((a,b)=>a-b);
+
+  const ordered=draws.slice().sort((a,b)=>b.drawNo-a.drawNo);
+  const exact=[];
+  const sameFive=[];
+  const numberStats=[];
+
+  for(const d of ordered){
+    const same=d.numbers.join(",")===nums.join(",");
+
+    if(same){
+      sameFive.push(d);
+      if(d.joker===joker)exact.push(d);
+    }
+  }
+
+  nums.forEach(n=>{
+    const appearances=ordered.filter(d=>d.numbers.includes(n));
+    const last=appearances[0]||null;
+    const since=last
+      ?ordered.findIndex(d=>d.drawNo===last.drawNo)
+      :null;
+
+    numberStats.push({
+      number:n,
+      count:appearances.length,
+      last:last,
+      since:since
+    });
+  });
+
+  const jokerDraws=ordered.filter(d=>d.joker===joker);
+  const lastJ=jokerDraws[0]||null;
+  const jokerSince=lastJ
+    ?ordered.findIndex(d=>d.drawNo===lastJ.drawNo)
+    :null;
+
+  let html=`
+    <b>Έλεγχος σε ${ordered.length} αποθηκευμένες κληρώσεις</b>
+    <p>Οι αριθμοί σου: ${nums.join(" - ")} | Τζόκερ ${joker}</p>`;
+
+  if(exact.length){
+    html+=`<p><strong>Βρέθηκε ο ακριβής συνδυασμός ${exact.length} φορά/ές.</strong></p>`;
+    exact.forEach(d=>{
+      html+=`<div>Κλήρωση ${d.drawNo} — ${fmt(d.drawTime)} ${balls(d.numbers,d.joker)}</div>`;
+    });
+  }else{
+    html+=`<p>Δεν βρέθηκε ο ακριβής συνδυασμός στο αποθηκευμένο ιστορικό.</p>`;
+  }
+
+  if(sameFive.length){
+    html+=`<h3>Ίδια 5 βασικά νούμερα</h3>`;
+    html+=`<p>Τα ίδια 5 βασικά νούμερα εμφανίστηκαν ${sameFive.length} φορά/ές, ανεξάρτητα από το Τζόκερ.</p>`;
+    sameFive.forEach(d=>{
+      html+=`<div>Κλήρωση ${d.drawNo} — ${fmt(d.drawTime)} — Τζόκερ ${d.joker}</div>`;
+    });
+  }else{
+    html+=`<p>Δεν βρέθηκαν τα ίδια 5 βασικά νούμερα μαζί σε κλήρωση.</p>`;
+  }
+
+  html+=`<h3>Ιστορικό των 5 αριθμών σου</h3>
+    <table><tr><th>Αριθμός</th><th>Εμφανίσεις</th><th>Τελευταία εμφάνιση</th><th>Κληρώσεις από τότε</th></tr>`;
+
+  numberStats.forEach(s=>{
+    html+=`<tr>
+      <td>${s.number}</td>
+      <td>${s.count}</td>
+      <td>${s.last?`#${s.last.drawNo} — ${fmt(s.last.drawTime)}`:"Καμία"}</td>
+      <td>${s.last?s.since:"—"}</td>
+    </tr>`;
+  });
+
+  html+=`</table>
+    <h3>Ιστορικό αριθμού Τζόκερ ${joker}</h3>
+    <p>Εμφανίσεις: <strong>${jokerDraws.length}</strong></p>
+    <p>Τελευταία εμφάνιση: <strong>${lastJ?`Κλήρωση ${lastJ.drawNo} — ${fmt(lastJ.drawTime)}`:"Καμία"}</strong></p>
+    <p>Κληρώσεις από τότε: <strong>${lastJ?jokerSince:"—"}</strong></p>`;
+
+  $("myResult").innerHTML=html;
+}
+
+/* Δημιουργία τυχαίων στηλών */
 $("make").onclick=()=>{
-  let count=Math.max(1,Math.min(100,Number($("count").value)||10));
-  let winners=new Set(draws.map(key));
-  let seen=new Set();
-  let out=[];
+  const count=Math.max(1,Math.min(100,Number($("count").value)||10));
+  const winners=new Set(draws.map(key));
+  const seen=new Set();
+  const out=[];
   let tries=0;
 
   while(out.length<count&&tries<count*10000){
     tries++;
 
-    let a=[];
+    const a=[];
     while(a.length<5){
-      let n=1+Math.floor(Math.random()*45);
+      const n=1+Math.floor(Math.random()*45);
       if(!a.includes(n))a.push(n);
     }
 
     a.sort((x,y)=>x-y);
 
-    let d={
+    const d={
       numbers:a,
       joker:1+Math.floor(Math.random()*20)
     };
 
-    let k=key(d);
+    const k=key(d);
 
     if(!winners.has(k)&&!seen.has(k)){
       seen.add(k);
@@ -362,41 +628,64 @@ $("make").onclick=()=>{
     </div>`).join("")||"Δεν βρέθηκαν συνδυασμοί.";
 };
 
+/* Εισαγωγή CSV:
+   drawNo;date;num1;num2;num3;num4;num5;joker
+*/
 $("csv").onchange=async e=>{
-  let file=e.target.files[0];
+  const file=e.target.files[0];
   if(!file)return;
 
-  let lines=(await file.text()).split(/\r?\n/);
-  let added=0;
+  try{
+    const lines=(await file.text()).split(/\r?\n/);
+    const imported=[];
+    let invalid=0;
 
-  for(let line of lines){
-    let p=line.trim().split(/[;, \t]+/);
-    if(p.length<8||! /^\d+$/.test(p[0]))continue;
+    for(const line of lines){
+      const trimmed=line.trim();
+      if(!trimmed)continue;
 
-    let d=normalize({
-      drawNo:p[0],
-      drawTime:p[1],
-      numbers:p.slice(2,7),
-      joker:p[7]
-    });
+      const p=trimmed.split(/[;,\t]+/).map(x=>x.trim());
 
-    if(d&&!draws.some(x=>x.drawNo===d.drawNo)){
-      draws.push(d);
-      added++;
+      if(p.length<8||!/^\d+$/.test(p[0]))continue;
+
+      const d=normalize({
+        drawNo:p[0],
+        drawTime:p[1],
+        numbers:p.slice(2,7),
+        joker:p[7]
+      });
+
+      if(d)imported.push(d);
+      else invalid++;
     }
+
+    const added=mergeDraws(imported);
+    render();
+
+    $("status").textContent=
+      `Η εισαγωγή ολοκληρώθηκε.\n`+
+      `Εγγραφές που αναγνωρίστηκαν: ${imported.length}\n`+
+      `Νέες κληρώσεις: ${added}\n`+
+      `Μη έγκυρες εγγραφές: ${invalid}\n`+
+      `Σύνολο αποθηκευμένων: ${draws.length}`;
+
+  }catch(err){
+    $("status").textContent="Σφάλμα εισαγωγής CSV: "+err.message;
   }
 
-  draws.sort((a,b)=>a.drawNo-b.drawNo);
-  save();
-
-  $("status").textContent=
-    `Η εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;
-
-  render();
   e.target.value="";
 };
 
+$("sync").onclick=syncRecent;
+$("historySync").onclick=syncHistory;
+$("checkMy").onclick=checkMyNumbers;
+
+/* Αυτόματος έλεγχος μία φορά την ημέρα όταν ανοίγει η εφαρμογή */
 render();
+
+if(localStorage.getItem(AUTO_STORE)!==new Date().toDateString()){
+  syncRecent();
+}
 </script>
 </body>
 </html>
