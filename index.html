@@ -413,45 +413,56 @@ function mergeDraws(list){
   return added;
 }
 
-/* Διαγνωστικός έλεγχος πρόσφατων αποτελεσμάτων */
+/* Διορθωμένος συγχρονισμός πρόσφατων αποτελεσμάτων */
 async function syncRecent(){
   $("sync").disabled=true;
-  $("status").textContent="Γίνεται διαγνωστικός έλεγχος των πρόσφατων αποτελεσμάτων…";
+  $("status").textContent="Γίνεται έλεγχος των τελευταίων ολοκληρωμένων κληρώσεων…";
 
   try{
-    const url="https://api.opap.gr/draws/v3.0/5104/last/20?status=results";
+    const url="https://api.opap.gr/draws/v3.0/5104/last/50?status=results";
     const body=await getJSON(url);
     const arr=extractArray(body);
 
-    const valid=arr.map(parseDraw).filter(Boolean);
-    const unrecognized=arr.filter(x=>!parseDraw(x));
+    // Παραλείπουμε την ενεργή κλήρωση, επειδή δεν έχει ακόμη αποτελέσματα.
+    const notActive=arr.filter(x=>
+      String(x?.status||"").toLowerCase()!=="active"
+    );
 
-    if(!valid.length){
-      throw new Error("Δεν αναγνωρίστηκαν κληρώσεις.");
+    // Ο parser αναγνωρίζει μόνο εγγραφές με διαθέσιμους νικητήριους αριθμούς.
+    const valid=notActive.map(parseDraw).filter(Boolean);
+    valid.sort((a,b)=>compareDraws(b,a));
+
+    // Χρησιμοποιούμε τις 20 πιο πρόσφατες ολοκληρωμένες κληρώσεις.
+    const latest=valid.slice(0,20);
+    if(!latest.length){
+      throw new Error("Δεν αναγνωρίστηκαν ολοκληρωμένες κληρώσεις με αποτελέσματα.");
     }
 
-    const added=mergeDraws(valid);
-    const now=new Date().toISOString();
+    const added=mergeDraws(latest);
 
-    localStorage.setItem(SYNC_STORE,now);
+    localStorage.setItem(SYNC_STORE,new Date().toISOString());
     localStorage.setItem(AUTO_STORE,new Date().toDateString());
 
     render();
 
-    let diagnostic="";
+    const skippedActive=arr.length-notActive.length;
+    const unrecognized=notActive.filter(x=>!parseDraw(x));
 
+    let diagnostic="";
     if(unrecognized.length){
       diagnostic=
-        "\n\nΜΗ ΑΝΑΓΝΩΡΙΣΜΕΝΗ ΚΛΗΡΩΣΗ:\n"+
+        "\n\nΜΗ ΑΝΑΓΝΩΡΙΣΜΕΝΗ ΜΗ ΕΝΕΡΓΗ ΚΛΗΡΩΣΗ:\n"+
         JSON.stringify(unrecognized[0],null,2);
     }else{
-      diagnostic="\nΔεν βρέθηκαν μη αναγνωρισμένες κληρώσεις.";
+      diagnostic="\nΔεν βρέθηκαν μη αναγνωρισμένες μη ενεργές κληρώσεις.";
     }
 
     $("status").textContent=
       `Ο έλεγχος ολοκληρώθηκε.\n`+
       `Κληρώσεις που επέστρεψε η πηγή: ${arr.length}\n`+
-      `Κληρώσεις που αναγνωρίστηκαν: ${valid.length}\n`+
+      `Ενεργές κληρώσεις που παραλείφθηκαν: ${skippedActive}\n`+
+      `Ολοκληρωμένες κληρώσεις που αναγνωρίστηκαν: ${valid.length}\n`+
+      `Κληρώσεις που χρησιμοποιήθηκαν: ${latest.length}\n`+
       `Νέες κληρώσεις: ${added}\n`+
       `Σύνολο αποθηκευμένων: ${draws.length}`+
       diagnostic;
