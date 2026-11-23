@@ -413,10 +413,10 @@ function mergeDraws(list){
   return added;
 }
 
-/* Έλεγχος πρόσφατων αποτελεσμάτων */
+/* Διαγνωστικός έλεγχος πρόσφατων αποτελεσμάτων */
 async function syncRecent(){
   $("sync").disabled=true;
-  $("status").textContent="Γίνεται έλεγχος των πρόσφατων αποτελεσμάτων…";
+  $("status").textContent="Γίνεται διαγνωστικός έλεγχος των πρόσφατων αποτελεσμάτων…";
 
   try{
     const url="https://api.opap.gr/draws/v3.0/5104/last/20?status=results";
@@ -424,9 +424,10 @@ async function syncRecent(){
     const arr=extractArray(body);
 
     const valid=arr.map(parseDraw).filter(Boolean);
+    const unrecognized=arr.filter(x=>!parseDraw(x));
 
     if(!valid.length){
-      throw new Error("Η πηγή απάντησε, αλλά δεν αναγνωρίστηκαν οι αριθμοί.");
+      throw new Error("Δεν αναγνωρίστηκαν κληρώσεις.");
     }
 
     const added=mergeDraws(valid);
@@ -437,12 +438,23 @@ async function syncRecent(){
 
     render();
 
+    let diagnostic="";
+
+    if(unrecognized.length){
+      diagnostic=
+        "\n\nΜΗ ΑΝΑΓΝΩΡΙΣΜΕΝΗ ΚΛΗΡΩΣΗ:\n"+
+        JSON.stringify(unrecognized[0],null,2);
+    }else{
+      diagnostic="\nΔεν βρέθηκαν μη αναγνωρισμένες κληρώσεις.";
+    }
+
     $("status").textContent=
       `Ο έλεγχος ολοκληρώθηκε.\n`+
       `Κληρώσεις που επέστρεψε η πηγή: ${arr.length}\n`+
       `Κληρώσεις που αναγνωρίστηκαν: ${valid.length}\n`+
       `Νέες κληρώσεις: ${added}\n`+
-      `Σύνολο αποθηκευμένων: ${draws.length}`;
+      `Σύνολο αποθηκευμένων: ${draws.length}`+
+      diagnostic;
 
   }catch(e){
     $("status").textContent="Αποτυχία ελέγχου: "+(e.message||"Άγνωστο σφάλμα");
