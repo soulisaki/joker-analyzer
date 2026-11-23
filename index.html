@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="el">
 <head>
@@ -72,6 +73,12 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 Η λήψη πλήρους ιστορικού γίνεται ξεχωριστά και μπορεί να χρειαστεί χρόνο.
 Οι ήδη αποθηκευμένες κληρώσεις δεν διαγράφονται.
 </p>
+</section>
+
+<section class="card">
+<h2>Διαγνωστικός έλεγχος ιστορικού</h2>
+<p class="muted">Έλεγχος παλαιότερης και νεότερης ημερομηνίας, καθώς και κατανομής των αποθηκευμένων κληρώσεων ανά έτος.</p>
+<div id="archiveDiagnostics" class="muted">Γίνεται έλεγχος…</div>
 </section>
 
 <section class="card">
@@ -208,6 +215,7 @@ function sortedDraws(){
 
 function render(){
   $("total").textContent=draws.length.toLocaleString("el-GR");
+  renderArchiveDiagnostics();
 
   const last=localStorage.getItem(SYNC_STORE);
   $("lastSync").textContent=last?new Date(last).toLocaleString("el-GR"):"—";
@@ -226,6 +234,62 @@ function render(){
         ${balls(d.numbers,d.joker)}
       </div>`).join("")
     :"Δεν υπάρχουν ακόμη δεδομένα.";
+}
+
+/* ΝΕΑ ΔΙΑΓΝΩΣΤΙΚΗ ΕΝΟΤΗΤΑ */
+function renderArchiveDiagnostics(){
+  const box=$("archiveDiagnostics");
+
+  if(!draws.length){
+    box.textContent="Δεν υπάρχουν αποθηκευμένες κληρώσεις για έλεγχο.";
+    return;
+  }
+
+  const dated=draws
+    .map(d=>({draw:d,date:parseDate(d.drawTime)}))
+    .filter(x=>x.date)
+    .sort((a,b)=>a.date-b.date);
+
+  const oldest=dated[0]||null;
+  const newest=dated[dated.length-1]||null;
+  const counts={};
+  let undated=0;
+
+  dated.forEach(x=>{
+    const year=x.date.getFullYear();
+    counts[year]=(counts[year]||0)+1;
+  });
+
+  undated=draws.length-dated.length;
+
+  const years=Object.keys(counts).map(Number).sort((a,b)=>a-b);
+  const firstYear=years.length?years[0]:null;
+  const lastYear=years.length?years[years.length-1]:null;
+  const missing=[];
+
+  if(firstYear!==null&&lastYear!==null){
+    for(let y=firstYear;y<=lastYear;y++){
+      if(!counts[y])missing.push(y);
+    }
+  }
+
+  const rows=years.map(y=>
+    `<tr><td>${y}</td><td>${counts[y].toLocaleString("el-GR")}</td></tr>`
+  ).join("");
+
+  box.innerHTML=`
+    <div class="grid">
+      <div class="stat"><b>${draws.length.toLocaleString("el-GR")}</b><span>Έγκυρες αποθηκευμένες κληρώσεις</span></div>
+      <div class="stat"><b>${dated.length.toLocaleString("el-GR")}</b><span>Κληρώσεις με αναγνωρίσιμη ημερομηνία</span></div>
+    </div>
+    <p><b>Παλαιότερη κλήρωση:</b> ${oldest?`#${oldest.draw.drawNo} — ${fmt(oldest.draw.drawTime)}`:"Δεν βρέθηκε ημερομηνία"}</p>
+    <p><b>Νεότερη κλήρωση:</b> ${newest?`#${newest.draw.drawNo} — ${fmt(newest.draw.drawTime)}`:"Δεν βρέθηκε ημερομηνία"}</p>
+    <p><b>Εγγραφές χωρίς αναγνωρίσιμη ημερομηνία:</b> ${undated}</p>
+    <h3>Κληρώσεις ανά έτος</h3>
+    <table><tr><th>Έτος</th><th>Κληρώσεις</th></tr>${rows||"<tr><td colspan='2'>Δεν υπάρχουν ημερομηνίες</td></tr>"}</table>
+    <p><b>Έτη χωρίς καταχωρισμένες κληρώσεις ανάμεσα στο πρώτο και το τελευταίο έτος:</b> ${missing.length?missing.join(", "):"Κανένα"}</p>
+    <p class="small">Η καταμέτρηση αφορά τις εγγραφές που είναι ήδη αποθηκευμένες σε αυτή τη συσκευή. Δεν διαγράφει ούτε τροποποιεί δεδομένα.</p>
+  `;
 }
 
 function renderStats(){
@@ -399,11 +463,7 @@ function addDays(date,days){
   return d;
 }
 
-/*
-  Προσπάθεια ανάκτησης παλαιότερων κληρώσεων.
-  Ανάκτηση σε μικρά χρονικά διαστήματα και σε σελίδες.
-  Κάθε εγγραφή ελέγχεται πριν αποθηκευτεί.
-*/
+/* Λήψη ιστορικού */
 async function syncHistory(){
   if(!confirm("Να ξεκινήσει η προσπάθεια λήψης του ιστορικού από το 1997; Η διαδικασία μπορεί να διαρκέσει αρκετά.")){
     return;
@@ -660,9 +720,7 @@ $("make").onclick=()=>{
     </div>`).join("")||"Δεν βρέθηκαν συνδυασμοί.";
 };
 
-/* Εισαγωγή CSV:
-   drawNo;date;num1;num2;num3;num4;num5;joker
-*/
+/* Εισαγωγή CSV */
 $("csv").onchange=async e=>{
   const file=e.target.files[0];
   if(!file)return;
