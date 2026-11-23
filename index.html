@@ -55,7 +55,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 <label class="filelabel" for="csv">Εισαγωγή ιστορικού CSV</label>
 <input id="csv" type="file" accept=".csv,.txt">
 </div>
-<p class="muted">Ο έλεγχος γίνεται όταν πατάς το κουμπί ή ανοίγεις ξανά την εφαρμογή. Για πλήρες ιστορικό, μπορείς να εισαγάγεις αρχείο CSV.</p>
+<p class="muted">Ο έλεγχος γίνεται όταν πατάς το κουμπί. Για πλήρες ιστορικό, μπορείς να εισαγάγεις αρχείο CSV.</p>
 </section>
 
 <section class="card">
@@ -214,16 +214,15 @@ function parseDraw(x){
   });
 }
 
-/* ΔΙΑΓΝΩΣΤΙΚΟΣ ΣΥΓΧΡΟΝΙΣΜΟΣ - ΔΕΝ ΑΛΛΑΖΕΙ ΤΗΝ ΑΠΟΘΗΚΕΥΣΗ */
+/* ΣΥΓΧΡΟΝΙΣΜΟΣ ΤΩΝ 20 ΤΕΛΕΥΤΑΙΩΝ ΚΛΗΡΩΣΕΩΝ */
 async function sync(){
   $("sync").disabled=true;
-  $("status").textContent="Γίνεται διαγνωστικός έλεγχος ΟΠΑΠ…";
+  $("status").textContent="Λήψη των 20 τελευταίων κληρώσεων από τον ΟΠΑΠ…";
 
   try{
-    const url="https://api.opap.gr/draws/v3.0/5104/last-result-and-active?status=results";
-
+    const url="https://api.opap.gr/draws/v3.0/5104/last/20?status=results";
     const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),15000);
+    const timeout=setTimeout(()=>controller.abort(),20000);
 
     let response;
     try{
@@ -240,7 +239,6 @@ async function sync(){
     }
 
     const body=await response.json();
-
     let arr=[];
 
     if(Array.isArray(body)){
@@ -251,15 +249,12 @@ async function sync(){
       arr=body.draws;
     }else if(Array.isArray(body.data)){
       arr=body.data;
-    }else if(body.last){
-      arr=Array.isArray(body.last)?body.last:[body.last];
     }else{
-      arr=[body];
+      throw new Error("Η απάντηση του ΟΠΑΠ δεν είναι λίστα κληρώσεων.");
     }
 
     const valid=[];
     const invalid=[];
-    const duplicateSource=[];
     const sourceSeen=new Set();
 
     arr.forEach(item=>{
@@ -267,58 +262,59 @@ async function sync(){
 
       if(!d){
         invalid.push({
-          drawId:item?.drawId??item?.drawID??null,
-          fields:Object.keys(item||{}),
-          record:item
+          drawId:item?.drawId??item?.drawID??item?.drawNo??null,
+          fields:Object.keys(item||{})
         });
         return;
       }
 
       const id=String(d.drawNo);
-
-      if(sourceSeen.has(id)){
-        duplicateSource.push(d.drawNo);
-        return;
+      if(!sourceSeen.has(id)){
+        sourceSeen.add(id);
+        valid.push(d);
       }
-
-      sourceSeen.add(id);
-      valid.push(d);
     });
 
-    const existing=new Set(
-      draws.map(d=>String(d.drawNo))
+    const savedById=new Map(
+      draws.map(d=>[String(d.drawNo),d])
     );
 
-    const alreadySaved=valid
-      .filter(d=>existing.has(String(d.drawNo)))
-      .map(d=>d.drawNo);
+    let added=0;
 
-    const notSaved=valid
-      .filter(d=>!existing.has(String(d.drawNo)))
-      .map(d=>d.drawNo);
+    valid.forEach(d=>{
+      const id=String(d.drawNo);
+      if(!savedById.has(id)){
+        savedById.set(id,d);
+        added++;
+      }
+    });
+
+    draws=Array.from(savedById.values())
+      .sort((a,b)=>a.drawNo-b.drawNo);
+
+    if(added>0) save();
+
+    render();
 
     const report={
-      "Κληρώσεις που έλαβε":arr.length,
-      "Κληρώσεις που αναγνώρισε":valid.length,
-      "Κληρώσεις που απέρριψε":invalid.length,
-      "Διπλές στην απάντηση":duplicateSource,
-      "Ήδη αποθηκευμένες":alreadySaved,
-      "Δεν είναι αποθηκευμένες":notSaved,
+      "Κληρώσεις που επέστρεψε ο ΟΠΑΠ":arr.length,
+      "Κληρώσεις που αναγνωρίστηκαν":valid.length,
+      "Νέες κληρώσεις που αποθηκεύτηκαν":added,
       "Σύνολο αποθηκευμένων":draws.length,
-      "Απορριφθείσες εγγραφές":invalid,
-      "Πεδία πρώτης εγγραφής":Object.keys(arr[0]||{})
+      "Αριθμοί κληρώσεων που λήφθηκαν":valid.map(d=>d.drawNo),
+      "Απορριφθείσες εγγραφές":invalid
     };
 
     $("status").textContent=
-      "ΔΙΑΓΝΩΣΤΙΚΟΣ ΕΛΕΓΧΟΣ:\n"+
-      JSON.stringify(report,null,2);
+      "Ο συγχρονισμός ολοκληρώθηκε. Νέες κληρώσεις: "+added+
+      "\n\n"+JSON.stringify(report,null,2);
 
     $("lastSync").textContent=
       new Date().toLocaleDateString("el-GR");
 
   }catch(e){
     $("status").textContent=
-      "Αποτυχία ελέγχου: "+(e.message||"Άγνωστο σφάλμα");
+      "Αποτυχία συγχρονισμού: "+(e.message||"Άγνωστο σφάλμα");
     $("lastSync").textContent=
       new Date().toLocaleDateString("el-GR");
   }finally{
