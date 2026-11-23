@@ -36,7 +36,6 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </style>
 </head>
 <body>
-
 <header>
 <h1>JOKER ANALYZER</h1>
 <p>Ιστορικό · Στατιστικά · Δημιουργία συνδυασμών</p>
@@ -183,7 +182,7 @@ $("stats").innerHTML=`
 <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
 }
 
-/* ΝΕΑ ΔΙΟΡΘΩΜΕΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
+/* ΑΝΑΓΝΩΣΗ ΑΠΟΤΕΛΕΣΜΑΤΟΣ ΟΠΑΠ */
 function parseDraw(x){
 if(!x||typeof x!=="object")return null;
 
@@ -193,8 +192,7 @@ const raw=Array.isArray(winning.list)?winning.list:
 (Array.isArray(x.results)?x.results:
 (Array.isArray(x.numbers)?x.numbers:[]));
 
-const main=raw.slice(0,5);
-
+let main=raw.slice(0,5);
 let joker=null;
 
 if(Array.isArray(winning.bonus)&&winning.bonus.length){
@@ -226,7 +224,7 @@ $("sync").disabled=true;
 $("status").textContent="Γίνεται σύνδεση με τον ΟΠΑΠ…";
 
 try{
-const url="https://api.opap.gr/draws/v3.0/5104/last/20";
+const url="https://api.opap.gr/draws/v3.0/5104/last-result-and-active?status=results";
 
 const controller=new AbortController();
 const timeout=setTimeout(()=>controller.abort(),15000);
@@ -259,11 +257,11 @@ arr=body.draws;
 }else if(Array.isArray(body.data)){
 arr=body.data;
 }else if(body.last){
-arr=[body.last];
+arr=Array.isArray(body.last)?body.last:[body.last];
 }
 
 if(!arr.length){
-throw new Error("Δεν βρέθηκαν κληρώσεις στην απάντηση.");
+throw new Error("Δεν βρέθηκε ολοκληρωμένη κλήρωση στην απάντηση.");
 }
 
 let added=0;
