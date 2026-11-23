@@ -19,7 +19,7 @@ h2{font-size:17px;margin:0 0 12px}
 button,.filelabel{border:0;border-radius:11px;background:var(--accent);color:#07151a;font-weight:700;padding:12px 14px;font-size:14px;cursor:pointer}
 button:disabled{opacity:.5}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.status{font-size:13px;color:var(--muted);margin:10px 0}
+.status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .stat{background:#0e1726;border-radius:12px;padding:12px}
 .stat b{display:block;font-size:22px}
@@ -95,7 +95,11 @@ if(!Array.isArray(draws))draws=[];
 const save=()=>localStorage.setItem(STORE,JSON.stringify(draws));
 
 function normalize(o){
-let nums=(o.numbers||[]).map(Number).sort((a,b)=>a-b);
+if(!o)return null;
+
+let nums=(Array.isArray(o.numbers)?o.numbers:[])
+.map(Number).sort((a,b)=>a-b);
+
 let j=Number(o.joker);
 let no=Number(o.drawNo);
 
@@ -179,27 +183,33 @@ $("stats").innerHTML=`
 <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
 }
 
-/* ΔΙΟΡΘΩΜΕΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ ΟΠΑΠ */
+/* ΝΕΑ ΔΙΟΡΘΩΜΕΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
 function parseDraw(x){
 if(!x||typeof x!=="object")return null;
 
 const winning=x.winningNumbers||{};
-const raw=winning.list||x.results||x.numbers||[];
+
+const raw=Array.isArray(winning.list)?winning.list:
+(Array.isArray(x.results)?x.results:
+(Array.isArray(x.numbers)?x.numbers:[]));
 
 const main=raw.slice(0,5);
-const bonus=winning.bonus;
 
-let joker;
+let joker=null;
 
-if(Array.isArray(bonus)){
-joker=bonus[0];
-}else if(bonus!==undefined&&bonus!==null){
-joker=bonus;
-}else{
-joker=x.jokerNumber??x.joker??raw[5];
+if(Array.isArray(winning.bonus)&&winning.bonus.length){
+joker=winning.bonus[0];
+}else if(
+typeof winning.bonus==="number"||
+typeof winning.bonus==="string"
+){
+joker=winning.bonus;
 }
 
-/* ΠΡΟΣΟΧΗ: Το API χρησιμοποιεί drawID */
+if(joker===null||joker===""){
+joker=raw[5]??x.jokerNumber??x.joker??null;
+}
+
 const drawNumber=
 x.drawID??x.drawId??x.drawNo??x.draw;
 
@@ -279,8 +289,9 @@ save();
 }
 
 if(added===0&&invalid>0){
+const fields=Object.keys(arr[0]||{}).join(", ");
 $("status").textContent=
-"Η πηγή απάντησε, αλλά δεν αναγνωρίστηκε η μορφή των αριθμών. Δεν προστέθηκαν κληρώσεις.";
+"Δεν αναγνωρίστηκαν οι αριθμοί. Πεδία πηγής: "+(fields||"δεν βρέθηκαν");
 }else{
 $("status").textContent=
 `Ο συγχρονισμός ολοκληρώθηκε. Νέες κληρώσεις: ${added}.`;
@@ -347,7 +358,7 @@ let added=0;
 
 for(let line of lines){
 let p=line.trim().split(/[;, \t]+/);
-if(p.length<8||!/^\d+$/.test(p[0]))continue;
+if(p.length<8||! /^\d+$/.test(p[0]))continue;
 
 let d=normalize({
 drawNo:p[0],
