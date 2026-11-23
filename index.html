@@ -272,7 +272,7 @@ function render(){
     :"Δεν υπάρχουν ακόμη δεδομένα.";
 }
 
-/* ΝΕΑ ΔΙΑΓΝΩΣΤΙΚΗ ΕΝΟΤΗΤΑ */
+/* Διαγνωστική ενότητα ιστορικού */
 function renderArchiveDiagnostics(){
   const box=$("archiveDiagnostics");
 
@@ -450,7 +450,7 @@ function mergeDraws(list){
   return added;
 }
 
-/* Διορθωμένος συγχρονισμός πρόσφατων αποτελεσμάτων */
+/* Συγχρονισμός πρόσφατων αποτελεσμάτων */
 async function syncRecent(){
   $("sync").disabled=true;
   $("status").textContent="Γίνεται έλεγχος των τελευταίων ολοκληρωμένων κληρώσεων…";
@@ -460,16 +460,13 @@ async function syncRecent(){
     const body=await getJSON(url);
     const arr=extractArray(body);
 
-    // Παραλείπουμε την ενεργή κλήρωση, επειδή δεν έχει ακόμη αποτελέσματα.
     const notActive=arr.filter(x=>
       String(x?.status||"").toLowerCase()!=="active"
     );
 
-    // Ο parser αναγνωρίζει μόνο εγγραφές με διαθέσιμους νικητήριους αριθμούς.
     const valid=notActive.map(parseDraw).filter(Boolean);
     valid.sort((a,b)=>compareDraws(b,a));
 
-    // Χρησιμοποιούμε τις 20 πιο πρόσφατες ολοκληρωμένες κληρώσεις.
     const latest=valid.slice(0,20);
     if(!latest.length){
       throw new Error("Δεν αναγνωρίστηκαν ολοκληρωμένες κληρώσεις με αποτελέσματα.");
@@ -678,9 +675,7 @@ function checkMyNumbers(){
   nums.forEach(n=>{
     const appearances=ordered.filter(d=>d.numbers.includes(n));
     const last=appearances[0]||null;
-    const since=last
-      ?ordered.indexOf(last)
-      :null;
+    const since=last?ordered.indexOf(last):null;
 
     numberStats.push({
       number:n,
@@ -692,9 +687,7 @@ function checkMyNumbers(){
 
   const jokerDraws=ordered.filter(d=>d.joker===joker);
   const lastJ=jokerDraws[0]||null;
-  const jokerSince=lastJ
-    ?ordered.indexOf(lastJ)
-    :null;
+  const jokerSince=lastJ?ordered.indexOf(lastJ):null;
 
   let html=`
     <b>Έλεγχος σε ${ordered.length} αποθηκευμένες κληρώσεις</b>
@@ -740,7 +733,7 @@ function checkMyNumbers(){
   $("myResult").innerHTML=html;
 }
 
-/* AI Joker Assistant — στατιστική ανάλυση και έλεγχος στρατηγικών */
+/* AI Joker Assistant */
 function aiGetMetrics(history){
   const ordered=history.slice().sort(compareDraws);
   const freq=Array(46).fill(0),jokerFreq=Array(21).fill(0);
@@ -749,7 +742,8 @@ function aiGetMetrics(history){
 
   ordered.forEach((d,i)=>{
     d.numbers.forEach(n=>{freq[n]++;last[n]=i;});
-    jokerFreq[d.joker]++;jokerLast[d.joker]++;
+    jokerFreq[d.joker]++;
+    jokerLast[d.joker]=i;
 
     for(let a=0;a<5;a++)for(let b=a+1;b<5;b++){
       const k=d.numbers[a]+"-"+d.numbers[b];
