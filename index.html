@@ -1,7 +1,8 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="el">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101827">
 <title>JOKER ANALYZER</title>
@@ -32,13 +33,11 @@ input[type=file]{display:none}
 .j{background:#f1c75b}
 .combo{padding:12px 0;border-bottom:1px solid var(--line)}
 .combo:last-child{border:0}
-table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line)}
-th{color:var(--muted)}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px}
 </style>
 </head>
 <body>
+
 <header>
 <h1>JOKER ANALYZER</h1>
 <p>Ιστορικό · Στατιστικά · Δημιουργία συνδυασμών</p>
@@ -181,22 +180,32 @@ $("stats").innerHTML=`
 <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
 }
 
+/* ΔΙΟΡΘΩΜΕΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ ΟΠΑΠ */
 function parseDraw(x){
 if(!x||typeof x!=="object")return null;
 
-let winning=x.winningNumbers||{};
-let raw=winning.list||x.results||x.numbers||[];
+const winning=x.winningNumbers||{};
+const raw=winning.list||x.results||x.numbers||[];
 
-let main=raw.slice(0,5);
-let bonus=winning.bonus;
+const main=raw.slice(0,5);
+const bonus=winning.bonus;
 
 let joker;
-if(Array.isArray(bonus))joker=bonus[0];
-else if(bonus!==undefined&&bonus!==null)joker=bonus;
-else joker=x.jokerNumber??x.joker??raw[5];
+
+if(Array.isArray(bonus)){
+joker=bonus[0];
+}else if(bonus!==undefined&&bonus!==null){
+joker=bonus;
+}else{
+joker=x.jokerNumber??x.joker??raw[5];
+}
+
+/* ΠΡΟΣΟΧΗ: Το API χρησιμοποιεί drawID */
+const drawNumber=
+x.drawID??x.drawId??x.drawNo??x.draw;
 
 return normalize({
-drawNo:x.drawId??x.drawNo??x.draw,
+drawNo:drawNumber,
 drawTime:x.drawTime||x.drawDate||x.date||"",
 numbers:main,
 joker:joker
@@ -205,14 +214,16 @@ joker:joker
 
 async function sync(){
 $("sync").disabled=true;
-$("status").textContent="Γίνεται προσπάθεια σύνδεσης με την πηγή αποτελεσμάτων…";
+$("status").textContent="Γίνεται σύνδεση με τον ΟΠΑΠ…";
 
 try{
 const url="https://api.opap.gr/draws/v3.0/5104/last/20";
+
 const controller=new AbortController();
 const timeout=setTimeout(()=>controller.abort(),15000);
 
 let response;
+
 try{
 response=await fetch(url,{
 headers:{accept:"application/json"},
@@ -222,28 +233,41 @@ signal:controller.signal
 clearTimeout(timeout);
 }
 
-if(!response.ok)throw new Error("HTTP "+response.status);
+if(!response.ok){
+throw new Error("HTTP "+response.status);
+}
 
-let body=await response.json();
+const body=await response.json();
 
-let arr=Array.isArray(body)?body:
-Array.isArray(body.content)?body.content:
-Array.isArray(body.draws)?body.draws:
-Array.isArray(body.data)?body.data:[];
+let arr=[];
+
+if(Array.isArray(body)){
+arr=body;
+}else if(Array.isArray(body.content)){
+arr=body.content;
+}else if(Array.isArray(body.draws)){
+arr=body.draws;
+}else if(Array.isArray(body.data)){
+arr=body.data;
+}else if(body.last){
+arr=[body.last];
+}
 
 if(!arr.length){
-throw new Error("Η πηγή δεν επέστρεψε κληρώσεις.");
+throw new Error("Δεν βρέθηκαν κληρώσεις στην απάντηση.");
 }
 
 let added=0;
 let invalid=0;
 
 arr.forEach(item=>{
-let d=parseDraw(item);
+const d=parseDraw(item);
+
 if(!d){
 invalid++;
 return;
 }
+
 if(!draws.some(old=>old.drawNo===d.drawNo)){
 draws.push(d);
 added++;
@@ -268,7 +292,7 @@ render();
 
 }catch(e){
 $("status").textContent=
-"Ο συγχρονισμός απέτυχε: "+(e.message||"Πρόβλημα σύνδεσης ή πρόσβασης στην πηγή.");
+"Αποτυχία συγχρονισμού: "+(e.message||"Πρόβλημα σύνδεσης.");
 $("lastSync").textContent=new Date().toLocaleDateString("el-GR");
 }
 
@@ -286,14 +310,20 @@ let tries=0;
 
 while(out.length<count&&tries<count*10000){
 tries++;
+
 let a=[];
 while(a.length<5){
 let n=1+Math.floor(Math.random()*45);
 if(!a.includes(n))a.push(n);
 }
+
 a.sort((x,y)=>x-y);
 
-let d={numbers:a,joker:1+Math.floor(Math.random()*20)};
+let d={
+numbers:a,
+joker:1+Math.floor(Math.random()*20)
+};
+
 let k=key(d);
 
 if(!winners.has(k)&&!seen.has(k)){
@@ -318,7 +348,7 @@ let added=0;
 
 for(let line of lines){
 let p=line.trim().split(/[;, \t]+/);
-if(p.length<8||! /^\d+$/.test(p[0]))continue;
+if(p.length<8||!/^\d+$/.test(p[0]))continue;
 
 let d=normalize({
 drawNo:p[0],
@@ -336,7 +366,9 @@ added++;
 draws.sort((a,b)=>a.drawNo-b.drawNo);
 save();
 
-$("status").textContent=`Η εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;
+$("status").textContent=
+`Η εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;
+
 render();
 e.target.value="";
 };
