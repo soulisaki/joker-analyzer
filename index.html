@@ -90,4 +90,5 @@ $("csv").onchange=async e=>{
  draws.sort((a,b)=>a.drawNo-b.drawNo);save();$("status").textContent=`Εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;render();e.target.value="";
 };
 render();
+setTimeout(sync,500);
 </script></body></html>
