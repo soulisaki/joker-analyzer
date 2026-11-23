@@ -92,16 +92,29 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 
 <section class="card">
 <h2>Έλεγχος δικών σου αριθμών</h2>
-<p class="muted">Συμπλήρωσε τους 5 βασικούς αριθμούς και τον αριθμό Τζόκερ.</p>
+<p class="muted">Συμπλήρωσε 10 διαφορετικούς βασικούς αριθμούς (1–45) και 5 διαφορετικούς αριθμούς Τζόκερ (1–20).</p>
+<h3>10 βασικοί αριθμοί</h3>
 <div class="number-inputs">
-  <input id="my1" type="number" min="1" max="45" placeholder="1">
-  <input id="my2" type="number" min="1" max="45" placeholder="2">
-  <input id="my3" type="number" min="1" max="45" placeholder="3">
-  <input id="my4" type="number" min="1" max="45" placeholder="4">
-  <input id="my5" type="number" min="1" max="45" placeholder="5">
-  <input id="myJ" class="joker-input" type="number" min="1" max="20" placeholder="Τζ">
+<input id="my1" type="number" min="1" max="45" placeholder="1">
+<input id="my2" type="number" min="1" max="45" placeholder="2">
+<input id="my3" type="number" min="1" max="45" placeholder="3">
+<input id="my4" type="number" min="1" max="45" placeholder="4">
+<input id="my5" type="number" min="1" max="45" placeholder="5">
+<input id="my6" type="number" min="1" max="45" placeholder="6">
+<input id="my7" type="number" min="1" max="45" placeholder="7">
+<input id="my8" type="number" min="1" max="45" placeholder="8">
+<input id="my9" type="number" min="1" max="45" placeholder="9">
+<input id="my10" type="number" min="1" max="45" placeholder="10">
 </div>
-<button id="checkMy">Έλεγχος αριθμών</button>
+<h3>5 αριθμοί Τζόκερ</h3>
+<div class="number-inputs">
+<input id="myJ1" class="joker-input" type="number" min="1" max="20" placeholder="Τζ1">
+<input id="myJ2" class="joker-input" type="number" min="1" max="20" placeholder="Τζ2">
+<input id="myJ3" class="joker-input" type="number" min="1" max="20" placeholder="Τζ3">
+<input id="myJ4" class="joker-input" type="number" min="1" max="20" placeholder="Τζ4">
+<input id="myJ5" class="joker-input" type="number" min="1" max="20" placeholder="Τζ5">
+</div>
+<button id="checkMy">Έλεγχος επιλογών 10+5</button>
 <div id="myResult" class="result muted">Περιμένω τους αριθμούς σου.</div>
 </section>
 
@@ -111,22 +124,25 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </section>
 
 <section class="card">
-<h2>Δημιουργία συνδυασμών</h2>
+<h2>Δημιουργία επιλογών 10+5</h2>
 <div class="row">
-  Στήλες:
+  Επιλογές:
   <input id="count" type="number" min="1" max="100" value="10">
   <button id="make">Δημιουργία</button>
 </div>
 <p class="muted">
-Απορρίπτονται ακριβείς συνδυασμοί 5+1 που υπάρχουν ήδη στο αποθηκευμένο ιστορικό.
-Όλοι οι δυνατοί συνδυασμοί έχουν την ίδια πιθανότητα στην επόμενη κλήρωση.
+Κάθε επιλογή περιλαμβάνει 10 βασικούς αριθμούς και 5 αριθμούς Τζόκερ.
+Δεν δημιουργείται πλήρες σύστημα στηλών.
+Η απλή στήλη 5+1 κοστίζει 1 €.
+Οι επιλογές 10+5 δεν έχουν ξεχωριστή τιμή χωρίς να επιλεγούν συγκεκριμένες στήλες.
+Όλοι οι αριθμοί έχουν την ίδια πιθανότητα σε μια δίκαιη κλήρωση.
 </p>
 <div id="out"></div>
 </section>
 
 <section class="card" id="aiAssistant">
 <h2>AI Joker Assistant</h2>
-<p class="muted">Στατιστική ανάλυση του αποθηκευμένου ιστορικού, δημιουργία συνδυασμών και ιστορική δοκιμή στρατηγικών. Λειτουργεί τοπικά στη συσκευή, χωρίς εξωτερική υπηρεσία ή API key.</p>
+<p class="muted">Στατιστική ανάλυση του αποθηκευμένου ιστορικού, δημιουργία επιλογών 10+5 και ιστορική δοκιμή στρατηγικών. Λειτουργεί τοπικά στη συσκευή, χωρίς εξωτερική υπηρεσία ή API key.</p>
 <div class="ai-controls">
   <label>Στρατηγική
     <select id="aiStrategy">
@@ -137,7 +153,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
       <option value="random">Τυχαία βάση σύγκρισης</option>
     </select>
   </label>
-  <label>Προτεινόμενες στήλες
+  <label>Προτεινόμενες επιλογές 10+5
     <input id="aiCount" type="number" min="1" max="50" value="10">
   </label>
 </div>
@@ -148,7 +164,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </div>
 <p class="status" id="aiStatus">Πάτησε «Ανάλυση ιστορικού» για να ξεκινήσεις.</p>
 <div id="aiOutput"></div>
-<p class="muted">Σημαντικό: οι προηγούμενες συχνότητες και καθυστερήσεις δεν κάνουν έναν αριθμό πιθανότερο στην επόμενη κλήρωση. Κάθε συγκεκριμένη στήλη 5+1 έχει την ίδια πιθανότητα. Η βαθμολογία είναι κριτήριο κατάταξης, όχι πρόβλεψη.</p>
+<p class="muted">Σημαντικό: οι προηγούμενες συχνότητες και καθυστερήσεις δεν κάνουν έναν αριθμό πιθανότερο στην επόμενη κλήρωση. Κάθε απλή στήλη 5+1 έχει την ίδια πιθανότητα και κοστίζει 1 €. Η επιλογή 10+5 δεν είναι στήλη ούτε πλήρες σύστημα. Η βαθμολογία είναι κριτήριο κατάταξης, όχι πρόβλεψη.</p>
 </section>
 
 <section class="card">
@@ -641,96 +657,90 @@ async function syncHistory(){
   }
 }
 
-/* Προσωπικοί αριθμοί */
+/* Προσωπικές επιλογές 10+5 */
 function checkMyNumbers(){
-  const ids=["my1","my2","my3","my4","my5"];
-  const nums=ids.map(id=>Number($(id).value));
-  const joker=Number($("myJ").value);
+ const nums=Array.from({length:10},(_,i)=>Number($("my"+(i+1)).value));
+ const jokers=Array.from({length:5},(_,i)=>Number($("myJ"+(i+1)).value));
 
-  if(nums.some((n,i)=>
-      !Number.isInteger(n)||n<1||n>45)||
-      new Set(nums).size!==5||
-      !Number.isInteger(joker)||joker<1||joker>20){
-    $("myResult").innerHTML=
-      "Συμπλήρωσε 5 διαφορετικούς αριθμούς από 1 έως 45 και έναν αριθμό Τζόκερ από 1 έως 20.";
-    return;
-  }
+ if(nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
+    new Set(nums).size!==10||
+    jokers.some(n=>!Number.isInteger(n)||n<1||n>20)||
+    new Set(jokers).size!==5){
+  $("myResult").innerHTML="Συμπλήρωσε 10 διαφορετικούς βασικούς αριθμούς από 1 έως 45 και 5 διαφορετικούς αριθμούς Τζόκερ από 1 έως 20.";
+  return;
+ }
 
-  nums.sort((a,b)=>a-b);
+ nums.sort((a,b)=>a-b);
+ jokers.sort((a,b)=>a-b);
 
-  const ordered=draws.slice().sort((a,b)=>compareDraws(b,a));
-  const exact=[];
-  const sameFive=[];
-  const numberStats=[];
+ const ordered=draws.slice().sort((a,b)=>compareDraws(b,a));
 
-  for(const d of ordered){
-    const same=d.numbers.join(",")===nums.join(",");
+ const ns=nums.map(n=>{
+   const a=ordered.filter(d=>d.numbers.includes(n));
+   const last=a[0]||null;
+   return {n,count:a.length,last,since:last?ordered.indexOf(last):null};
+ });
 
-    if(same){
-      sameFive.push(d);
-      if(d.joker===joker)exact.push(d);
-    }
-  }
+ const js=jokers.map(n=>{
+   const a=ordered.filter(d=>d.joker===n);
+   const last=a[0]||null;
+   return {n,count:a.length,last,since:last?ordered.indexOf(last):null};
+ });
 
-  nums.forEach(n=>{
-    const appearances=ordered.filter(d=>d.numbers.includes(n));
-    const last=appearances[0]||null;
-    const since=last?ordered.indexOf(last):null;
+ const dist=Array(6).fill(0);
+ let jHits=0,full=0;
+ const matched=[];
 
-    numberStats.push({
-      number:n,
-      count:appearances.length,
-      last:last,
-      since:since
-    });
-  });
+ ordered.forEach(d=>{
+   const h=d.numbers.filter(n=>nums.includes(n)).length;
+   const j=jokers.includes(d.joker);
+   dist[h]++;
+   if(j)jHits++;
+   if(h===5&&j)full++;
+   if(h||j)matched.push({d,h,j});
+ });
 
-  const jokerDraws=ordered.filter(d=>d.joker===joker);
-  const lastJ=jokerDraws[0]||null;
-  const jokerSince=lastJ?ordered.indexOf(lastJ):null;
+ let html=`
+ <b>Έλεγχος επιλογής 10+5 σε ${ordered.length.toLocaleString("el-GR")} κληρώσεις</b>
+ <p><b>Βασικοί:</b> ${nums.join(" - ")}</p>
+ <p><b>Τζόκερ:</b> ${jokers.join(" - ")}</p>
+ <h3>Ιστορικό 10 βασικών αριθμών</h3>
+ <table><tr><th>Αριθμός</th><th>Εμφανίσεις</th><th>Τελευταία εμφάνιση</th><th>Κληρώσεις από τότε</th></tr>`;
 
-  let html=`
-    <b>Έλεγχος σε ${ordered.length} αποθηκευμένες κληρώσεις</b>
-    <p>Οι αριθμοί σου: ${nums.join(" - ")} | Τζόκερ ${joker}</p>`;
+ ns.forEach(x=>{
+   html+=`<tr><td>${x.n}</td><td>${x.count}</td><td>${x.last?`#${x.last.drawNo} — ${fmt(x.last.drawTime)}`:"Καμία"}</td><td>${x.last?x.since:"—"}</td></tr>`;
+ });
 
-  if(exact.length){
-    html+=`<p><strong>Βρέθηκε ο ακριβής συνδυασμός ${exact.length} φορά/ές.</strong></p>`;
-    exact.forEach(d=>{
-      html+=`<div>Κλήρωση ${d.drawNo} — ${fmt(d.drawTime)} ${balls(d.numbers,d.joker)}</div>`;
-    });
-  }else{
-    html+=`<p>Δεν βρέθηκε ο ακριβής συνδυασμός στο αποθηκευμένο ιστορικό.</p>`;
-  }
+ html+=`</table>
+ <h3>Ιστορικό 5 αριθμών Τζόκερ</h3>
+ <table><tr><th>Τζόκερ</th><th>Εμφανίσεις</th><th>Τελευταία εμφάνιση</th><th>Κληρώσεις από τότε</th></tr>`;
 
-  if(sameFive.length){
-    html+=`<h3>Ίδια 5 βασικά νούμερα</h3>`;
-    html+=`<p>Τα ίδια 5 βασικά νούμερα εμφανίστηκαν ${sameFive.length} φορά/ές, ανεξάρτητα από το Τζόκερ.</p>`;
-    sameFive.forEach(d=>{
-      html+=`<div>Κλήρωση ${d.drawNo} — ${fmt(d.drawTime)} — Τζόκερ ${d.joker}</div>`;
-    });
-  }else{
-    html+=`<p>Δεν βρέθηκαν τα ίδια 5 βασικά νούμερα μαζί σε κλήρωση.</p>`;
-  }
+ js.forEach(x=>{
+   html+=`<tr><td>${x.n}</td><td>${x.count}</td><td>${x.last?`#${x.last.drawNo} — ${fmt(x.last.drawTime)}`:"Καμία"}</td><td>${x.last?x.since:"—"}</td></tr>`;
+ });
 
-  html+=`<h3>Ιστορικό των 5 αριθμών σου</h3>
-    <table><tr><th>Αριθμός</th><th>Εμφανίσεις</th><th>Τελευταία εμφάνιση</th><th>Κληρώσεις από τότε</th></tr>`;
+ html+=`</table>
+ <h3>Κατανομή βασικών επιτυχιών</h3>
+ <table><tr><th>Αριθμοί από τους 5</th><th>Κληρώσεις</th></tr>`;
 
-  numberStats.forEach(s=>{
-    html+=`<tr>
-      <td>${s.number}</td>
-      <td>${s.count}</td>
-      <td>${s.last?`#${s.last.drawNo} — ${fmt(s.last.drawTime)}`:"Καμία"}</td>
-      <td>${s.last?s.since:"—"}</td>
-    </tr>`;
-  });
+ dist.forEach((v,i)=>{
+   html+=`<tr><td>${i}</td><td>${v}</td></tr>`;
+ });
 
-  html+=`</table>
-    <h3>Ιστορικό αριθμού Τζόκερ ${joker}</h3>
-    <p>Εμφανίσεις: <strong>${jokerDraws.length}</strong></p>
-    <p>Τελευταία εμφάνιση: <strong>${lastJ?`Κλήρωση ${lastJ.drawNo} — ${fmt(lastJ.drawTime)}`:"Καμία"}</strong></p>
-    <p>Κληρώσεις από τότε: <strong>${lastJ?jokerSince:"—"}</strong></p>`;
+ html+=`</table>
+ <h3>Σύνοψη</h3>
+ <p>Κληρώσεις με τουλάχιστον έναν από τους 5 αριθμούς Τζόκερ: <strong>${jHits}</strong></p>
+ <p>Κληρώσεις με 5/5 βασικούς μέσα στους 10 και Τζόκερ μέσα στους 5: <strong>${full}</strong></p>
+ <p><strong>Κόστος απλής στήλης 5+1: 1 €.</strong> Δεν υπολογίζεται συνολικό κόστος για την επιλογή 10+5.</p>`;
 
-  $("myResult").innerHTML=html;
+ if(matched.length){
+   html+="<h3>Πρόσφατες κληρώσεις με αντιστοιχίες</h3>";
+   matched.slice(0,30).forEach(x=>{
+     html+=`<div class="combo">Κλήρωση ${x.d.drawNo} — ${fmt(x.d.drawTime)}: ${x.h}/5 βασικοί αριθμοί${x.j?" και Τζόκερ":""}</div>`;
+   });
+ }
+
+ $("myResult").innerHTML=html;
 }
 
 /* AI Joker Assistant */
@@ -805,45 +815,71 @@ function aiScores(m,strategy){
 }
 
 function aiComboScore(d,m,scores,strategy){
-  let score=d.numbers.reduce((sum,n)=>sum+scores.ns[n],0)+scores.js[d.joker];
+  let score=d.numbers.reduce((a,n)=>a+scores.ns[n],0)+
+    d.jokers.reduce((a,n)=>a+scores.js[n],0);
 
   if(strategy==="balanced"){
-    const odd=d.numbers.filter(n=>n%2===1).length;
+    const odd=d.numbers.filter(n=>n%2).length;
     const low=d.numbers.filter(n=>n<=22).length;
     const sum=d.numbers.reduce((a,b)=>a+b,0);
-    score-=Math.abs(odd-2.5)*.18+Math.abs(low-2.5)*.18+Math.abs(sum-115)/180;
+    score-=Math.abs(odd-5)*.18+
+      Math.abs(low-5)*.18+
+      Math.abs(sum-230)/360;
   }
 
-  let pairTotal=0;
-  for(let a=0;a<5;a++)for(let b=a+1;b<5;b++)
-    pairTotal+=m.pairs.get(d.numbers[a]+"-"+d.numbers[b])||0;
+  let pairs=0;
+  for(let a=0;a<10;a++)for(let b=a+1;b<10;b++){
+    pairs+=m.pairs.get(d.numbers[a]+"-"+d.numbers[b])||0;
+  }
 
-  return score+Math.log1p(pairTotal)/30;
+  return score+Math.log1p(pairs)/30;
 }
 
 function aiRandomCombo(){
-  const numbers=[];
+  const numbers=[],jokers=[];
 
-  while(numbers.length<5){
+  while(numbers.length<10){
     const n=1+Math.floor(Math.random()*45);
     if(!numbers.includes(n))numbers.push(n);
   }
 
+  while(jokers.length<5){
+    const n=1+Math.floor(Math.random()*20);
+    if(!jokers.includes(n))jokers.push(n);
+  }
+
   numbers.sort((a,b)=>a-b);
-  return {numbers,joker:1+Math.floor(Math.random()*20)};
+  jokers.sort((a,b)=>a-b);
+
+  return {numbers,jokers};
+}
+
+function selectionKey(d){
+  return d.numbers.join(",")+"|"+d.jokers.join(",");
+}
+
+function selectionBalls(numbers,jokers){
+  return `<div class="small">10 βασικοί αριθμοί</div>
+    <div class="balls">${numbers.map(n=>`<span class="ball">${n}</span>`).join("")}</div>
+    <div class="small" style="margin-top:8px">5 αριθμοί Τζόκερ</div>
+    <div class="balls">${jokers.map(n=>`<span class="ball j">${n}</span>`).join("")}</div>`;
 }
 
 function aiBuildSuggestions(history,strategy,count){
-  const m=aiGetMetrics(history),scores=aiScores(m,strategy);
-  const used=new Set(history.map(key)),pool=new Map();
+  const m=aiGetMetrics(history);
+  const scores=aiScores(m,strategy);
+  const pool=new Map();
   const target=Math.max(800,count*180);
   let tries=0;
 
   while(pool.size<target&&tries<target*8){
     tries++;
-    const d=aiRandomCombo(),k=key(d);
-    if(used.has(k)||pool.has(k))continue;
-    pool.set(k,{...d,score:aiComboScore(d,m,scores,strategy)});
+    const d=aiRandomCombo();
+    const k=selectionKey(d);
+
+    if(!pool.has(k)){
+      pool.set(k,{...d,score:aiComboScore(d,m,scores,strategy)});
+    }
   }
 
   const ranked=Array.from(pool.values()).sort((a,b)=>b.score-a.score);
@@ -851,8 +887,13 @@ function aiBuildSuggestions(history,strategy,count){
 
   for(const d of ranked){
     if(chosen.length>=count)break;
-    if(chosen.every(x=>d.numbers.filter(n=>x.numbers.includes(n)).length<4))
+
+    if(chosen.every(x=>
+      d.numbers.filter(n=>x.numbers.includes(n)).length<8&&
+      d.jokers.filter(n=>x.jokers.includes(n)).length<4
+    )){
       chosen.push(d);
+    }
   }
 
   return {chosen,totalCandidates:ranked.length};
@@ -903,9 +944,14 @@ function aiGenerate(){
 
   $("aiStatus").textContent="Δημιουργήθηκαν "+result.chosen.length+" προτάσεις με τη στρατηγική "+labels[strategy]+".";
 
-  $("aiOutput").innerHTML="<h3>Προτεινόμενες στήλες — "+labels[strategy]+"</h3>"+
-    result.chosen.map((d,i)=>'<div class="combo"><b>Πρόταση '+(i+1)+'</b><span class="ai-pill">Βαθμός '+d.score.toFixed(3)+'</span>'+balls(d.numbers,d.joker)+'</div>').join("")+
-    '<p class="small">Βαθμός κατάταξης, όχι πιθανότητα νίκης. Ελέγχθηκαν '+result.totalCandidates+' υποψήφιοι συνδυασμοί.</p>';
+  $("aiOutput").innerHTML="<h3>Προτεινόμενες επιλογές 10+5 — "+labels[strategy]+"</h3>"+
+    result.chosen.map((d,i)=>
+      '<div class="combo"><b>Επιλογή '+(i+1)+'</b>'+
+      '<span class="ai-pill">Βαθμός '+d.score.toFixed(3)+'</span>'+
+      selectionBalls(d.numbers,d.jokers)+'</div>'
+    ).join("")+
+    '<p class="small">Βαθμός κατάταξης, όχι πιθανότητα νίκης. Ελέγχθηκαν '+
+    result.totalCandidates+' υποψήφιες επιλογές 10+5.</p>';
 }
 
 function aiBacktest(){
@@ -920,28 +966,32 @@ function aiBacktest(){
   const tests=Math.min(100,Math.max(40,Math.floor(ordered.length*.1)));
   const start=ordered.length-tests;
 
-  let stratHits=0,randomHits=0,stratThree=0,randomThree=0,stratJ=0,randomJ=0,done=0;
+  let shits=0,rhits=0,sfive=0,rfive=0,sj=0,rj=0,sfull=0,rfull=0,done=0;
 
   for(let i=start;i<ordered.length;i++){
-    const train=ordered.slice(0,i),actual=ordered[i];
+    const train=ordered.slice(0,i);
+    const actual=ordered[i];
     const suggested=aiBuildSuggestions(train,strategy,10).chosen;
-    const randoms=[];
-
-    while(randoms.length<10)randoms.push(aiRandomCombo());
+    const randoms=Array.from({length:10},()=>aiRandomCombo());
 
     if(!suggested.length)continue;
 
-    const best=list=>Math.max(...list.map(d=>d.numbers.filter(n=>actual.numbers.includes(n)).length));
-    const sh=best(suggested),rh=best(randoms);
+    const hits=d=>d.numbers.filter(n=>actual.numbers.includes(n)).length;
+    const best=list=>Math.max(...list.map(hits));
+    const a=best(suggested);
+    const b=best(randoms);
 
-    stratHits+=sh;
-    randomHits+=rh;
+    shits+=a;
+    rhits+=b;
 
-    if(sh>=3)stratThree++;
-    if(rh>=3)randomThree++;
+    if(a===5)sfive++;
+    if(b===5)rfive++;
 
-    if(suggested.some(d=>d.joker===actual.joker))stratJ++;
-    if(randoms.some(d=>d.joker===actual.joker))randomJ++;
+    if(suggested.some(d=>d.jokers.includes(actual.joker)))sj++;
+    if(randoms.some(d=>d.jokers.includes(actual.joker)))rj++;
+
+    if(suggested.some(d=>hits(d)===5&&d.jokers.includes(actual.joker)))sfull++;
+    if(randoms.some(d=>hits(d)===5&&d.jokers.includes(actual.joker)))rfull++;
 
     done++;
   }
@@ -954,16 +1004,18 @@ function aiBacktest(){
   $("aiStatus").textContent="Η ιστορική δοκιμή ολοκληρώθηκε σε "+done+" παλαιότερες κληρώσεις.";
 
   $("aiOutput").innerHTML=`
-    <h3>Σύγκριση με 10 τυχαίες στήλες ανά κλήρωση</h3>
+    <h3>Σύγκριση 10 επιλογών 10+5 ανά ιστορική κλήρωση</h3>
     <div class="grid">
-      <div class="ai-metric"><b>${(stratHits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί — στρατηγική</span></div>
-      <div class="ai-metric"><b>${(randomHits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί — τυχαία</span></div>
-      <div class="ai-metric"><b>${stratThree}</b><span>Κληρώσεις με 3+ βασικούς — στρατηγική</span></div>
-      <div class="ai-metric"><b>${randomThree}</b><span>Κληρώσεις με 3+ βασικούς — τυχαία</span></div>
-      <div class="ai-metric"><b>${stratJ}</b><span>Τζόκερ που βρέθηκε σε τουλάχιστον μία στήλη — στρατηγική</span></div>
-      <div class="ai-metric"><b>${randomJ}</b><span>Τζόκερ που βρέθηκε σε τουλάχιστον μία στήλη — τυχαία</span></div>
+      <div class="ai-metric"><b>${(shits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί μέσα στους 10 — στρατηγική</span></div>
+      <div class="ai-metric"><b>${(rhits/done).toFixed(2)}</b><span>Μέγιστοι βασικοί αριθμοί μέσα στους 10 — τυχαία</span></div>
+      <div class="ai-metric"><b>${sfive}</b><span>Κληρώσεις με 5/5 βασικούς — στρατηγική</span></div>
+      <div class="ai-metric"><b>${rfive}</b><span>Κληρώσεις με 5/5 βασικούς — τυχαία</span></div>
+      <div class="ai-metric"><b>${sj}</b><span>Τζόκερ μέσα στους 5 — στρατηγική</span></div>
+      <div class="ai-metric"><b>${rj}</b><span>Τζόκερ μέσα στους 5 — τυχαία</span></div>
+      <div class="ai-metric"><b>${sfull}</b><span>Πλήρης κάλυψη 5+1 — στρατηγική</span></div>
+      <div class="ai-metric"><b>${rfull}</b><span>Πλήρης κάλυψη 5+1 — τυχαία</span></div>
     </div>
-    <p class="small">Σε κάθε δοκιμή η στρατηγική χρησιμοποίησε μόνο κληρώσεις πριν από την κλήρωση ελέγχου. Τα αποτελέσματα είναι ιστορικά και τυχαία· δεν αποδεικνύουν πλεονέκτημα στις μελλοντικές κληρώσεις.</p>
+    <p class="small">Η στρατηγική χρησιμοποίησε μόνο προηγούμενες κληρώσεις. Τα αποτελέσματα δεν αποδεικνύουν πλεονέκτημα στις μελλοντικές κληρώσεις.</p>
   `;
 }
 
@@ -971,43 +1023,29 @@ $("aiAnalyze").onclick=aiAnalyze;
 $("aiGenerate").onclick=aiGenerate;
 $("aiBacktest").onclick=aiBacktest;
 
-/* Δημιουργία τυχαίων στηλών */
+/* Δημιουργία τυχαίων επιλογών 10+5 */
 $("make").onclick=()=>{
   const count=Math.max(1,Math.min(100,Number($("count").value)||10));
-  const winners=new Set(draws.map(key));
   const seen=new Set();
   const out=[];
   let tries=0;
 
-  while(out.length<count&&tries<count*10000){
+  while(out.length<count&&tries<count*100){
     tries++;
+    const d=aiRandomCombo();
+    const k=selectionKey(d);
 
-    const a=[];
-    while(a.length<5){
-      const n=1+Math.floor(Math.random()*45);
-      if(!a.includes(n))a.push(n);
-    }
+    if(seen.has(k))continue;
 
-    a.sort((x,y)=>x-y);
-
-    const d={
-      numbers:a,
-      joker:1+Math.floor(Math.random()*20)
-    };
-
-    const k=key(d);
-
-    if(!winners.has(k)&&!seen.has(k)){
-      seen.add(k);
-      out.push(d);
-    }
+    seen.add(k);
+    out.push(d);
   }
 
   $("out").innerHTML=out.map((d,i)=>`
     <div class="combo">
-      <b>Στήλη ${i+1}</b>
-      ${balls(d.numbers,d.joker)}
-    </div>`).join("")||"Δεν βρέθηκαν συνδυασμοί.";
+      <b>Επιλογή 10+5 ${i+1}</b>
+      ${selectionBalls(d.numbers,d.jokers)}
+    </div>`).join("")||"Δεν δημιουργήθηκαν επιλογές.";
 };
 
 /* Εισαγωγή CSV */
