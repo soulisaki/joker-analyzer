@@ -19,7 +19,7 @@ h2{font-size:17px;margin:0 0 12px}
 button,.filelabel{border:0;border-radius:11px;background:var(--accent);color:#07151a;font-weight:700;padding:12px 14px;font-size:14px;cursor:pointer}
 button:disabled{opacity:.5}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere}
+.status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere;white-space:pre-wrap}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .stat{background:#0e1726;border-radius:12px;padding:12px}
 .stat b{display:block;font-size:22px}
@@ -36,6 +36,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </style>
 </head>
 <body>
+
 <header>
 <h1>JOKER ANALYZER</h1>
 <p>Ιστορικό · Στατιστικά · Δημιουργία συνδυασμών</p>
@@ -182,25 +183,20 @@ $("stats").innerHTML=`
 <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
 }
 
-/* ΑΝΑΓΝΩΣΗ ΑΠΟΤΕΛΕΣΜΑΤΟΣ ΟΠΑΠ */
+/* ΠΡΟΣΩΡΙΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
 function parseDraw(x){
 if(!x||typeof x!=="object")return null;
 
 const winning=x.winningNumbers||{};
-
 const raw=Array.isArray(winning.list)?winning.list:
 (Array.isArray(x.results)?x.results:
 (Array.isArray(x.numbers)?x.numbers:[]));
 
-let main=raw.slice(0,5);
 let joker=null;
 
 if(Array.isArray(winning.bonus)&&winning.bonus.length){
 joker=winning.bonus[0];
-}else if(
-typeof winning.bonus==="number"||
-typeof winning.bonus==="string"
-){
+}else if(typeof winning.bonus==="number"||typeof winning.bonus==="string"){
 joker=winning.bonus;
 }
 
@@ -208,13 +204,10 @@ if(joker===null||joker===""){
 joker=raw[5]??x.jokerNumber??x.joker??null;
 }
 
-const drawNumber=
-x.drawID??x.drawId??x.drawNo??x.draw;
-
 return normalize({
-drawNo:drawNumber,
+drawNo:x.drawID??x.drawId??x.drawNo??x.draw,
 drawTime:x.drawTime||x.drawDate||x.date||"",
-numbers:main,
+numbers:raw.slice(0,5),
 joker:joker
 });
 }
@@ -258,10 +251,12 @@ arr=body.draws;
 arr=body.data;
 }else if(body.last){
 arr=Array.isArray(body.last)?body.last:[body.last];
+}else{
+arr=[body];
 }
 
 if(!arr.length){
-throw new Error("Δεν βρέθηκε ολοκληρωμένη κλήρωση στην απάντηση.");
+throw new Error("Δεν βρέθηκαν δεδομένα στην απάντηση.");
 }
 
 let added=0;
@@ -287,9 +282,16 @@ save();
 }
 
 if(added===0&&invalid>0){
-const fields=Object.keys(arr[0]||{}).join(", ");
+let diagnostic={
+responseKeys:Object.keys(body||{}),
+recordKeys:Object.keys(arr[0]||{}),
+record:arr[0]||null
+};
+
+let output=JSON.stringify(diagnostic);
+
 $("status").textContent=
-"Δεν αναγνωρίστηκαν οι αριθμοί. Πεδία πηγής: "+(fields||"δεν βρέθηκαν");
+"ΔΙΑΓΝΩΣΤΙΚΑ ΟΠΑΠ:\n"+output.slice(0,1800);
 }else{
 $("status").textContent=
 `Ο συγχρονισμός ολοκληρώθηκε. Νέες κληρώσεις: ${added}.`;
