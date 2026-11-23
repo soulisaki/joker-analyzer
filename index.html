@@ -88,303 +88,319 @@ const STORE="jokerAnalyzerDraws_v1";
 let draws=[];
 
 try{
-draws=JSON.parse(localStorage.getItem(STORE)||"[]");
-if(!Array.isArray(draws))draws=[];
-}catch(e){draws=[]}
+  draws=JSON.parse(localStorage.getItem(STORE)||"[]");
+  if(!Array.isArray(draws))draws=[];
+}catch(e){
+  draws=[];
+}
 
 const save=()=>localStorage.setItem(STORE,JSON.stringify(draws));
 
 function normalize(o){
-if(!o)return null;
+  if(!o)return null;
 
-let nums=(Array.isArray(o.numbers)?o.numbers:[])
-.map(Number).sort((a,b)=>a-b);
+  let nums=(Array.isArray(o.numbers)?o.numbers:[])
+    .map(Number).sort((a,b)=>a-b);
 
-let j=Number(o.joker);
-let no=Number(o.drawNo);
+  let j=Number(o.joker);
+  let no=Number(o.drawNo);
 
-if(nums.length!==5||
-new Set(nums).size!==5||
-nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
-!Number.isInteger(j)||j<1||j>20||
-!Number.isFinite(no))return null;
+  if(nums.length!==5||
+    new Set(nums).size!==5||
+    nums.some(n=>!Number.isInteger(n)||n<1||n>45)||
+    !Number.isInteger(j)||j<1||j>20||
+    !Number.isFinite(no))return null;
 
-return{
-drawNo:no,
-drawTime:o.drawTime||"",
-numbers:nums,
-joker:j
-};
+  return{
+    drawNo:no,
+    drawTime:o.drawTime||"",
+    numbers:nums,
+    joker:j
+  };
 }
 
 const key=d=>[...d.numbers].sort((a,b)=>a-b).join(",")+"|"+d.joker;
 
 function fmt(x){
-if(!x)return "—";
-let d=new Date(x);
-return isNaN(d)?"—":d.toLocaleDateString("el-GR");
+  if(!x)return "—";
+  let d=new Date(x);
+  return isNaN(d)?"—":d.toLocaleDateString("el-GR");
 }
 
 function balls(a,j){
-return `<div class="balls">
-${a.map(n=>`<span class="ball">${n}</span>`).join("")}
-<span class="ball j">${j}</span>
-</div>`;
+  return `<div class="balls">
+    ${a.map(n=>`<span class="ball">${n}</span>`).join("")}
+    <span class="ball j">${j}</span>
+  </div>`;
 }
 
 function render(){
-$("total").textContent=draws.length.toLocaleString("el-GR");
-renderStats();
+  $("total").textContent=draws.length.toLocaleString("el-GR");
+  renderStats();
 
-let recent=draws.slice()
-.sort((a,b)=>b.drawNo-a.drawNo)
-.slice(0,10);
+  let recent=draws.slice()
+    .sort((a,b)=>b.drawNo-a.drawNo)
+    .slice(0,20);
 
-$("recent").innerHTML=recent.length
-?recent.map(d=>`
-<div class="combo">
-<b>Κλήρωση ${d.drawNo}</b>
-<span class="muted">${fmt(d.drawTime)}</span>
-${balls(d.numbers,d.joker)}
-</div>`).join("")
-:"Δεν υπάρχουν δεδομένα.";
+  $("recent").innerHTML=recent.length
+    ?recent.map(d=>`
+      <div class="combo">
+        <b>Κλήρωση ${d.drawNo}</b>
+        <span class="muted">${fmt(d.drawTime)}</span>
+        ${balls(d.numbers,d.joker)}
+      </div>`).join("")
+    :"Δεν υπάρχουν δεδομένα.";
 }
 
 function renderStats(){
-if(!draws.length){
-$("stats").textContent="Δεν υπάρχουν δεδομένα. Κάνε εισαγωγή CSV.";
-return;
+  if(!draws.length){
+    $("stats").textContent="Δεν υπάρχουν δεδομένα. Κάνε εισαγωγή CSV.";
+    return;
+  }
+
+  let freq=Array(46).fill(0);
+  let jokerFreq=Array(21).fill(0);
+  let last=Array(46).fill(-1);
+
+  draws.forEach((d,i)=>{
+    d.numbers.forEach(n=>{
+      freq[n]++;
+      last[n]=i;
+    });
+    jokerFreq[d.joker]++;
+  });
+
+  let nums=Array.from({length:45},(_,i)=>i+1);
+  let top=nums.slice().sort((a,b)=>freq[b]-freq[a]).slice(0,10);
+  let jokers=Array.from({length:20},(_,i)=>i+1)
+    .sort((a,b)=>jokerFreq[b]-jokerFreq[a]).slice(0,8);
+  let cold=nums.slice().sort((a,b)=>last[a]-last[b]).slice(0,8);
+
+  $("stats").innerHTML=`
+    <b>Συχνότεροι βασικοί αριθμοί</b>
+    <p>${top.map(n=>`${n} (${freq[n]})`).join(" · ")}</p>
+    <b>Συχνότεροι αριθμοί Τζόκερ</b>
+    <p>${jokers.map(n=>`${n} (${jokerFreq[n]})`).join(" · ")}</p>
+    <b>Μεγαλύτερη αποχή από τελευταία εμφάνιση</b>
+    <p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
 }
 
-let freq=Array(46).fill(0);
-let jokerFreq=Array(21).fill(0);
-let last=Array(46).fill(-1);
-
-draws.forEach((d,i)=>{
-d.numbers.forEach(n=>{
-freq[n]++;
-last[n]=i;
-});
-jokerFreq[d.joker]++;
-});
-
-let nums=Array.from({length:45},(_,i)=>i+1);
-let top=nums.slice().sort((a,b)=>freq[b]-freq[a]).slice(0,10);
-let jokers=Array.from({length:20},(_,i)=>i+1)
-.sort((a,b)=>jokerFreq[b]-jokerFreq[a]).slice(0,8);
-let cold=nums.slice().sort((a,b)=>last[a]-last[b]).slice(0,8);
-
-$("stats").innerHTML=`
-<b>Συχνότεροι βασικοί αριθμοί</b>
-<p>${top.map(n=>`${n} (${freq[n]})`).join(" · ")}</p>
-<b>Συχνότεροι αριθμοί Τζόκερ</b>
-<p>${jokers.map(n=>`${n} (${jokerFreq[n]})`).join(" · ")}</p>
-<b>Μεγαλύτερη αποχή από τελευταία εμφάνιση</b>
-<p>${cold.map(n=>`${n} (${last[n]<0?"δεν έχει εμφανιστεί":(draws.length-1-last[n])+" κληρώσεις"})`).join(" · ")}</p>`;
-}
-
-/* ΠΡΟΣΩΡΙΝΗ ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
+/* ΑΝΑΓΝΩΣΗ ΚΛΗΡΩΣΗΣ */
 function parseDraw(x){
-if(!x||typeof x!=="object")return null;
+  if(!x||typeof x!=="object")return null;
 
-const winning=x.winningNumbers||{};
-const raw=Array.isArray(winning.list)?winning.list:
-(Array.isArray(x.results)?x.results:
-(Array.isArray(x.numbers)?x.numbers:[]));
+  const winning=x.winningNumbers||{};
+  const raw=Array.isArray(winning.list)?winning.list:
+    (Array.isArray(x.results)?x.results:
+    (Array.isArray(x.numbers)?x.numbers:[]));
 
-let joker=null;
+  let joker=null;
 
-if(Array.isArray(winning.bonus)&&winning.bonus.length){
-joker=winning.bonus[0];
-}else if(typeof winning.bonus==="number"||typeof winning.bonus==="string"){
-joker=winning.bonus;
+  if(Array.isArray(winning.bonus)&&winning.bonus.length){
+    joker=winning.bonus[0];
+  }else if(typeof winning.bonus==="number"||typeof winning.bonus==="string"){
+    joker=winning.bonus;
+  }
+
+  if(joker===null||joker===""){
+    joker=raw[5]??x.jokerNumber??x.joker??null;
+  }
+
+  return normalize({
+    drawNo:x.drawID??x.drawId??x.drawNo??x.draw,
+    drawTime:x.drawTime||x.drawDate||x.date||"",
+    numbers:raw.slice(0,5),
+    joker:joker
+  });
 }
 
-if(joker===null||joker===""){
-joker=raw[5]??x.jokerNumber??x.joker??null;
-}
-
-return normalize({
-drawNo:x.drawID??x.drawId??x.drawNo??x.draw,
-drawTime:x.drawTime||x.drawDate||x.date||"",
-numbers:raw.slice(0,5),
-joker:joker
-});
-}
-
+/* ΔΙΑΓΝΩΣΤΙΚΟΣ ΣΥΓΧΡΟΝΙΣΜΟΣ - ΔΕΝ ΑΛΛΑΖΕΙ ΤΗΝ ΑΠΟΘΗΚΕΥΣΗ */
 async function sync(){
-$("sync").disabled=true;
-$("status").textContent="Γίνεται σύνδεση με τον ΟΠΑΠ…";
+  $("sync").disabled=true;
+  $("status").textContent="Γίνεται διαγνωστικός έλεγχος ΟΠΑΠ…";
 
-try{
-const url="https://api.opap.gr/draws/v3.0/5104/last-result-and-active?status=results";
+  try{
+    const url="https://api.opap.gr/draws/v3.0/5104/last-result-and-active?status=results";
 
-const controller=new AbortController();
-const timeout=setTimeout(()=>controller.abort(),15000);
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
 
-let response;
+    let response;
+    try{
+      response=await fetch(url,{
+        headers:{accept:"application/json"},
+        signal:controller.signal
+      });
+    }finally{
+      clearTimeout(timeout);
+    }
 
-try{
-response=await fetch(url,{
-headers:{accept:"application/json"},
-signal:controller.signal
-});
-}finally{
-clearTimeout(timeout);
-}
+    if(!response.ok){
+      throw new Error("HTTP "+response.status);
+    }
 
-if(!response.ok){
-throw new Error("HTTP "+response.status);
-}
+    const body=await response.json();
 
-const body=await response.json();
+    let arr=[];
 
-let arr=[];
+    if(Array.isArray(body)){
+      arr=body;
+    }else if(Array.isArray(body.content)){
+      arr=body.content;
+    }else if(Array.isArray(body.draws)){
+      arr=body.draws;
+    }else if(Array.isArray(body.data)){
+      arr=body.data;
+    }else if(body.last){
+      arr=Array.isArray(body.last)?body.last:[body.last];
+    }else{
+      arr=[body];
+    }
 
-if(Array.isArray(body)){
-arr=body;
-}else if(Array.isArray(body.content)){
-arr=body.content;
-}else if(Array.isArray(body.draws)){
-arr=body.draws;
-}else if(Array.isArray(body.data)){
-arr=body.data;
-}else if(body.last){
-arr=Array.isArray(body.last)?body.last:[body.last];
-}else{
-arr=[body];
-}
+    const valid=[];
+    const invalid=[];
+    const duplicateSource=[];
+    const sourceSeen=new Set();
 
-if(!arr.length){
-throw new Error("Δεν βρέθηκαν δεδομένα στην απάντηση.");
-}
+    arr.forEach(item=>{
+      const d=parseDraw(item);
 
-let added=0;
-let invalid=0;
+      if(!d){
+        invalid.push({
+          drawId:item?.drawId??item?.drawID??null,
+          fields:Object.keys(item||{}),
+          record:item
+        });
+        return;
+      }
 
-arr.forEach(item=>{
-const d=parseDraw(item);
+      const id=String(d.drawNo);
 
-if(!d){
-invalid++;
-return;
-}
+      if(sourceSeen.has(id)){
+        duplicateSource.push(d.drawNo);
+        return;
+      }
 
-if(!draws.some(old=>old.drawNo===d.drawNo)){
-draws.push(d);
-added++;
-}
-});
+      sourceSeen.add(id);
+      valid.push(d);
+    });
 
-if(added>0){
-draws.sort((a,b)=>a.drawNo-b.drawNo);
-save();
-}
+    const existing=new Set(
+      draws.map(d=>String(d.drawNo))
+    );
 
-if(added===0&&invalid>0){
-let diagnostic={
-responseKeys:Object.keys(body||{}),
-recordKeys:Object.keys(arr[0]||{}),
-record:arr[0]||null
-};
+    const alreadySaved=valid
+      .filter(d=>existing.has(String(d.drawNo)))
+      .map(d=>d.drawNo);
 
-let output=JSON.stringify(diagnostic);
+    const notSaved=valid
+      .filter(d=>!existing.has(String(d.drawNo)))
+      .map(d=>d.drawNo);
 
-$("status").textContent=
-"ΔΙΑΓΝΩΣΤΙΚΑ ΟΠΑΠ:\n"+output.slice(0,1800);
-}else{
-$("status").textContent=
-`Ο συγχρονισμός ολοκληρώθηκε. Νέες κληρώσεις: ${added}.`;
-}
+    const report={
+      "Κληρώσεις που έλαβε":arr.length,
+      "Κληρώσεις που αναγνώρισε":valid.length,
+      "Κληρώσεις που απέρριψε":invalid.length,
+      "Διπλές στην απάντηση":duplicateSource,
+      "Ήδη αποθηκευμένες":alreadySaved,
+      "Δεν είναι αποθηκευμένες":notSaved,
+      "Σύνολο αποθηκευμένων":draws.length,
+      "Απορριφθείσες εγγραφές":invalid,
+      "Πεδία πρώτης εγγραφής":Object.keys(arr[0]||{})
+    };
 
-$("lastSync").textContent=new Date().toLocaleDateString("el-GR");
-render();
+    $("status").textContent=
+      "ΔΙΑΓΝΩΣΤΙΚΟΣ ΕΛΕΓΧΟΣ:\n"+
+      JSON.stringify(report,null,2);
 
-}catch(e){
-$("status").textContent=
-"Αποτυχία συγχρονισμού: "+(e.message||"Πρόβλημα σύνδεσης.");
-$("lastSync").textContent=new Date().toLocaleDateString("el-GR");
-}
+    $("lastSync").textContent=
+      new Date().toLocaleDateString("el-GR");
 
-$("sync").disabled=false;
+  }catch(e){
+    $("status").textContent=
+      "Αποτυχία ελέγχου: "+(e.message||"Άγνωστο σφάλμα");
+    $("lastSync").textContent=
+      new Date().toLocaleDateString("el-GR");
+  }finally{
+    $("sync").disabled=false;
+  }
 }
 
 $("sync").onclick=sync;
 
 $("make").onclick=()=>{
-let count=Math.max(1,Math.min(100,Number($("count").value)||10));
-let winners=new Set(draws.map(key));
-let seen=new Set();
-let out=[];
-let tries=0;
+  let count=Math.max(1,Math.min(100,Number($("count").value)||10));
+  let winners=new Set(draws.map(key));
+  let seen=new Set();
+  let out=[];
+  let tries=0;
 
-while(out.length<count&&tries<count*10000){
-tries++;
+  while(out.length<count&&tries<count*10000){
+    tries++;
 
-let a=[];
-while(a.length<5){
-let n=1+Math.floor(Math.random()*45);
-if(!a.includes(n))a.push(n);
-}
+    let a=[];
+    while(a.length<5){
+      let n=1+Math.floor(Math.random()*45);
+      if(!a.includes(n))a.push(n);
+    }
 
-a.sort((x,y)=>x-y);
+    a.sort((x,y)=>x-y);
 
-let d={
-numbers:a,
-joker:1+Math.floor(Math.random()*20)
-};
+    let d={
+      numbers:a,
+      joker:1+Math.floor(Math.random()*20)
+    };
 
-let k=key(d);
+    let k=key(d);
 
-if(!winners.has(k)&&!seen.has(k)){
-seen.add(k);
-out.push(d);
-}
-}
+    if(!winners.has(k)&&!seen.has(k)){
+      seen.add(k);
+      out.push(d);
+    }
+  }
 
-$("out").innerHTML=out.map((d,i)=>`
-<div class="combo">
-<b>Στήλη ${i+1}</b>
-${balls(d.numbers,d.joker)}
-</div>`).join("")||"Δεν βρέθηκαν συνδυασμοί.";
+  $("out").innerHTML=out.map((d,i)=>`
+    <div class="combo">
+      <b>Στήλη ${i+1}</b>
+      ${balls(d.numbers,d.joker)}
+    </div>`).join("")||"Δεν βρέθηκαν συνδυασμοί.";
 };
 
 $("csv").onchange=async e=>{
-let file=e.target.files[0];
-if(!file)return;
+  let file=e.target.files[0];
+  if(!file)return;
 
-let lines=(await file.text()).split(/\r?\n/);
-let added=0;
+  let lines=(await file.text()).split(/\r?\n/);
+  let added=0;
 
-for(let line of lines){
-let p=line.trim().split(/[;, \t]+/);
-if(p.length<8||! /^\d+$/.test(p[0]))continue;
+  for(let line of lines){
+    let p=line.trim().split(/[;, \t]+/);
+    if(p.length<8||! /^\d+$/.test(p[0]))continue;
 
-let d=normalize({
-drawNo:p[0],
-drawTime:p[1],
-numbers:p.slice(2,7),
-joker:p[7]
-});
+    let d=normalize({
+      drawNo:p[0],
+      drawTime:p[1],
+      numbers:p.slice(2,7),
+      joker:p[7]
+    });
 
-if(d&&!draws.some(x=>x.drawNo===d.drawNo)){
-draws.push(d);
-added++;
-}
-}
+    if(d&&!draws.some(x=>x.drawNo===d.drawNo)){
+      draws.push(d);
+      added++;
+    }
+  }
 
-draws.sort((a,b)=>a.drawNo-b.drawNo);
-save();
+  draws.sort((a,b)=>a.drawNo-b.drawNo);
+  save();
 
-$("status").textContent=
-`Η εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;
+  $("status").textContent=
+    `Η εισαγωγή ολοκληρώθηκε. Προστέθηκαν ${added} κληρώσεις.`;
 
-render();
-e.target.value="";
+  render();
+  e.target.value="";
 };
 
 render();
-setTimeout(sync,500);
 </script>
 </body>
 </html>
