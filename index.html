@@ -19,13 +19,14 @@ h3{font-size:14px;margin:15px 0 7px}
 .muted{color:var(--muted);font-size:13px;line-height:1.5}
 button,.filelabel{border:0;border-radius:11px;background:var(--accent);color:#07151a;font-weight:700;padding:12px 14px;font-size:14px;cursor:pointer;display:inline-block}
 button:disabled{opacity:.5}
+button[hidden]{display:none}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 .status{font-size:13px;color:var(--muted);margin:10px 0;overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.5}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .stat{background:#0e1726;border-radius:12px;padding:12px}
 .stat b{display:block;font-size:22px}
 .stat span{color:var(--muted);font-size:12px}
-input[type=number]{width:65px;background:#0e1726;color:white;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px}
+input[type=number],.number-inputs input{width:65px;background:#0e1726;color:white;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px}
 input[type=file]{display:none}
 .row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0}
 .number-inputs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
@@ -95,17 +96,21 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 <p class="muted">Συμπλήρωσε 5 διαφορετικούς βασικούς αριθμούς (1–45) και έναν αριθμό Τζόκερ (1–20).</p>
 <h3>5 βασικοί αριθμοί</h3>
 <div class="number-inputs">
-<input id="my1" type="number" aria-label="Βασικός αριθμός 1" min="1" max="45" placeholder="1">
-<input id="my2" type="number" aria-label="Βασικός αριθμός 2" min="1" max="45" placeholder="2">
-<input id="my3" type="number" aria-label="Βασικός αριθμός 3" min="1" max="45" placeholder="3">
-<input id="my4" type="number" aria-label="Βασικός αριθμός 4" min="1" max="45" placeholder="4">
-<input id="my5" type="number" aria-label="Βασικός αριθμός 5" min="1" max="45" placeholder="5">
+<input id="my1" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="next" aria-label="Βασικός αριθμός 1" placeholder="1">
+<input id="my2" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="next" aria-label="Βασικός αριθμός 2" placeholder="2">
+<input id="my3" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="next" aria-label="Βασικός αριθμός 3" placeholder="3">
+<input id="my4" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="next" aria-label="Βασικός αριθμός 4" placeholder="4">
+<input id="my5" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="next" aria-label="Βασικός αριθμός 5" placeholder="5">
 </div>
 <h3>Αριθμός Τζόκερ</h3>
 <div class="number-inputs">
-<input id="myJ1" class="joker-input" type="number" min="1" max="20" placeholder="Τζ" aria-label="Αριθμός Τζόκερ">
+<input id="myJ1" class="joker-input" type="text" inputmode="numeric" maxlength="2" autocomplete="off" enterkeyhint="go" placeholder="Τζ" aria-label="Αριθμός Τζόκερ">
 </div>
-<button id="checkMy">Έλεγχος επιλογών 5+1</button>
+<div class="actions">
+  <button id="nextMy" type="button">Επόμενο</button>
+  <button id="checkMy" type="button">Έλεγχος επιλογών 5+1</button>
+</div>
+<p class="status" id="myInputStatus" role="status" hidden></p>
 <div id="myResult" class="result muted">Περιμένω τους αριθμούς σου.</div>
 </section>
 
@@ -909,6 +914,62 @@ async function downloadHistory(full){
   }
 }
 
+/* Γρήγορη καταχώριση προσωπικής στήλης */
+const myFields=["my1","my2","my3","my4","my5","myJ1"].map($);
+let myFieldIndex=0;
+
+function showMyInputError(message=""){
+  const status=$("myInputStatus");
+  status.textContent=message;
+  status.hidden=!message;
+}
+
+function advanceMyField(){
+  const field=myFields[myFieldIndex];
+  const value=Number(field.value);
+  const isJoker=myFieldIndex===myFields.length-1;
+  const max=isJoker?20:45;
+  const duplicate=!isJoker&&myFields.slice(0,5).some(other=>
+    other!==field&&Number(other.value)===value);
+  const error=!/^\d{1,2}$/.test(field.value)||value<1||value>max
+    ?`Βάλε αριθμό από 1 έως ${max}.`
+    :duplicate?"Έχεις ήδη βάλει αυτόν τον βασικό αριθμό.":"";
+
+  showMyInputError(error);
+  if(error){
+    field.focus();
+    field.select();
+    return;
+  }
+
+  field.value=String(value);
+  if(isJoker){
+    $("checkMy").click();
+  }else{
+    const next=myFields[myFieldIndex+1];
+    next.focus();
+    next.select();
+  }
+}
+
+myFields.forEach((field,index)=>{
+  field.addEventListener("focus",()=>{
+    myFieldIndex=index;
+    $("nextMy").hidden=index===myFields.length-1;
+  });
+  field.addEventListener("input",()=>{
+    field.value=field.value.replace(/[^0-9]/g,"").slice(0,2);
+    showMyInputError();
+    if(field.value.length===2&&index<myFields.length-1)advanceMyField();
+  });
+  field.addEventListener("keydown",event=>{
+    if(event.key!=="Enter"||event.isComposing)return;
+    event.preventDefault();
+    advanceMyField();
+  });
+});
+$("nextMy").onclick=advanceMyField;
+
 /* Προσωπικές επιλογές 5+1 */
 async function checkMyNumbers(){
  const nums=Array.from({length:5},(_,i)=>Number($("my"+(i+1)).value));
@@ -1365,4 +1426,3 @@ if(localStorage.getItem(AUTO_STORE)!==new Date().toDateString()){
 </script>
 </body>
 </html>
-
