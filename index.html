@@ -78,8 +78,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
   <input id="csv" type="file" accept=".csv,.txt">
 </div>
 <p class="muted">
-Ο καθημερινός έλεγχος γίνεται όταν ανοίγεις την εφαρμογή.
-Η λήψη πλήρους ιστορικού γίνεται ξεχωριστά και μπορεί να χρειαστεί χρόνο.
+Ο καθημερινός έλεγχος γίνεται όταν ανοίγεις την εφαρμογή. Ο προσωπικός έλεγχος ενημερώνει το αρχείο όταν χρειάζεται.
+Η πρώτη λήψη του αρχείου από το 1997 μπορεί να χρειαστεί χρόνο.
 Οι ήδη αποθηκευμένες κληρώσεις δεν διαγράφονται.
 </p>
 </section>
@@ -157,8 +157,17 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 </section>
 
 <section class="card">
-<h2>Πρόσφατες κληρώσεις</h2>
+<h2>Αρχείο κληρώσεων</h2>
+<div class="row">
+  <label for="archiveYear">Έτος</label>
+  <select id="archiveYear"><option value="">Όλα τα έτη</option></select>
+</div>
+<p class="small" id="archiveShown"></p>
+<p class="small">Οι 220 κληρώσεις του 1997–1999 προέρχονται από τα αρχεία
+<a href="https://www.kyr.gr/kyrtzoker/web/JOKER%20%20_1997%20_%20SHMERA.htm">KYR</a> και
+<a href="https://www.mytzoker.gr/kliroseis">mytzoker.gr</a>. Από το 2000 η πηγή είναι ο ΟΠΑΠ.</p>
 <div id="recent" class="muted">Δεν υπάρχουν ακόμη δεδομένα.</div>
+<button id="moreDraws" hidden>Εμφάνιση περισσότερων κληρώσεων</button>
 </section>
 
 </main>
@@ -174,17 +183,256 @@ const STORE="jokerAnalyzerDraws_v1";
 const SYNC_STORE="jokerAnalyzerLastSync_v1";
 const AUTO_STORE="jokerAnalyzerAutoCheck_v1";
 
+const COVERAGE_STORE="jokerAnalyzerCoverage_v2";
+const HISTORY_START="1997-11-16";
+const OPAP_HISTORY_START="2000-01-01";
+// KYR results, with dates and winning columns cross-checked against mytzoker.gr.
+// https://www.kyr.gr/kyrtzoker/web/JOKER%20%20_1997%20_%20SHMERA.htm
+// https://www.mytzoker.gr/kliroseis/1997 (also 1998 and 1999)
+const EARLY_DRAWS=[
+  ["1997-11-16",5,12,18,20,32,2],
+  ["1997-11-19",2,6,23,24,42,14],
+  ["1997-11-23",10,11,31,36,44,8],
+  ["1997-11-26",6,18,23,28,35,5],
+  ["1997-11-30",5,6,11,37,42,7],
+  ["1997-12-03",2,18,30,31,42,17],
+  ["1997-12-07",7,14,18,31,44,14],
+  ["1997-12-10",3,15,19,40,45,18],
+  ["1997-12-14",6,19,27,30,32,4],
+  ["1997-12-17",2,11,22,28,31,16],
+  ["1997-12-21",3,15,19,32,38,20],
+  ["1997-12-24",21,22,24,35,40,3],
+  ["1997-12-28",19,20,23,30,41,8],
+  ["1997-12-31",4,13,17,34,38,12],
+  ["1998-01-04",8,18,21,28,36,1],
+  ["1998-01-08",14,27,30,31,34,12],
+  ["1998-01-11",14,19,23,38,43,19],
+  ["1998-01-14",12,15,18,29,39,14],
+  ["1998-01-18",12,17,19,27,37,18],
+  ["1998-01-21",1,16,20,38,41,19],
+  ["1998-01-25",15,19,31,44,45,7],
+  ["1998-01-28",4,13,15,19,39,17],
+  ["1998-02-01",14,19,23,25,42,2],
+  ["1998-02-04",12,25,26,35,44,12],
+  ["1998-02-08",16,17,19,27,39,4],
+  ["1998-02-11",10,15,23,35,40,14],
+  ["1998-02-15",25,34,40,41,44,8],
+  ["1998-02-18",23,24,32,37,44,2],
+  ["1998-02-22",7,13,28,29,39,8],
+  ["1998-02-25",1,5,9,20,44,8],
+  ["1998-03-01",9,13,22,25,29,8],
+  ["1998-03-04",21,25,33,35,38,5],
+  ["1998-03-08",1,5,9,13,19,12],
+  ["1998-03-11",2,15,32,34,41,13],
+  ["1998-03-15",16,26,31,32,41,14],
+  ["1998-03-18",3,14,29,39,45,14],
+  ["1998-03-22",5,9,14,23,39,1],
+  ["1998-03-25",14,16,17,19,33,7],
+  ["1998-03-29",3,16,21,23,28,10],
+  ["1998-04-01",3,13,36,42,45,5],
+  ["1998-04-05",17,21,23,39,41,7],
+  ["1998-04-08",14,19,25,39,43,15],
+  ["1998-04-12",28,31,32,39,43,17],
+  ["1998-04-15",14,19,29,39,44,5],
+  ["1998-04-19",15,21,26,31,40,13],
+  ["1998-04-23",7,11,18,23,38,2],
+  ["1998-04-26",16,17,18,31,39,17],
+  ["1998-04-29",11,14,26,32,36,13],
+  ["1998-05-03",2,20,21,23,36,1],
+  ["1998-05-06",5,11,14,19,43,3],
+  ["1998-05-10",17,22,25,36,42,19],
+  ["1998-05-13",11,22,24,30,36,19],
+  ["1998-05-17",1,18,27,30,41,11],
+  ["1998-05-20",14,18,26,31,32,19],
+  ["1998-05-24",7,17,23,25,27,14],
+  ["1998-05-27",3,4,9,16,43,4],
+  ["1998-05-31",7,13,34,41,43,19],
+  ["1998-06-03",11,14,19,25,35,13],
+  ["1998-06-07",24,29,40,41,45,18],
+  ["1998-06-10",3,12,14,20,40,16],
+  ["1998-06-14",6,13,23,29,45,15],
+  ["1998-06-17",2,3,26,28,29,14],
+  ["1998-06-21",1,12,25,27,44,10],
+  ["1998-06-24",25,26,27,35,41,4],
+  ["1998-06-28",3,10,12,16,31,14],
+  ["1998-07-01",1,8,14,15,44,7],
+  ["1998-07-05",1,2,27,32,41,11],
+  ["1998-07-08",5,13,29,32,36,5],
+  ["1998-07-12",16,17,19,29,35,15],
+  ["1998-07-15",12,13,19,23,27,10],
+  ["1998-07-19",9,27,28,39,45,16],
+  ["1998-07-22",3,10,12,39,45,5],
+  ["1998-07-26",10,11,18,31,42,4],
+  ["1998-07-29",4,16,20,34,36,11],
+  ["1998-08-02",1,2,17,35,37,9],
+  ["1998-08-05",18,39,41,44,45,18],
+  ["1998-08-09",5,9,20,21,42,8],
+  ["1998-08-12",14,15,31,39,42,5],
+  ["1998-08-19",11,24,27,33,40,10],
+  ["1998-08-23",1,8,15,36,42,7],
+  ["1998-08-26",7,13,23,31,36,20],
+  ["1998-08-30",8,20,36,41,44,1],
+  ["1998-09-02",9,14,23,42,45,16],
+  ["1998-09-06",6,10,15,40,41,8],
+  ["1998-09-09",3,12,34,40,45,20],
+  ["1998-09-13",7,12,17,22,36,19],
+  ["1998-09-16",7,8,17,26,29,16],
+  ["1998-09-20",7,8,35,39,44,17],
+  ["1998-09-23",1,7,11,16,33,18],
+  ["1998-09-27",1,12,30,37,38,9],
+  ["1998-09-30",5,10,27,28,41,9],
+  ["1998-10-04",11,15,16,26,29,16],
+  ["1998-10-07",2,4,16,18,41,6],
+  ["1998-10-11",9,18,20,29,37,9],
+  ["1998-10-14",1,4,10,26,42,13],
+  ["1998-10-18",1,5,23,33,44,5],
+  ["1998-10-21",7,11,16,35,36,4],
+  ["1998-10-25",3,4,11,38,40,13],
+  ["1998-10-28",1,19,25,28,43,16],
+  ["1998-11-01",5,7,24,26,33,1],
+  ["1998-11-04",2,16,22,29,32,7],
+  ["1998-11-08",1,9,11,20,21,16],
+  ["1998-11-11",1,27,29,34,38,16],
+  ["1998-11-15",2,15,23,36,37,14],
+  ["1998-11-18",20,23,24,35,38,17],
+  ["1998-11-22",1,28,37,41,42,17],
+  ["1998-11-25",10,11,36,38,42,4],
+  ["1998-11-29",18,20,23,34,41,3],
+  ["1998-12-02",2,17,23,29,40,12],
+  ["1998-12-06",18,22,27,30,39,3],
+  ["1998-12-09",6,7,16,35,45,15],
+  ["1998-12-13",18,22,24,32,37,11],
+  ["1998-12-16",5,9,14,33,35,12],
+  ["1998-12-20",1,12,13,30,38,5],
+  ["1998-12-23",13,20,21,36,37,16],
+  ["1998-12-26",3,18,25,41,45,12],
+  ["1998-12-30",1,15,26,34,35,7],
+  ["1999-01-03",3,4,20,27,37,15],
+  ["1999-01-06",2,13,15,22,32,17],
+  ["1999-01-10",2,17,20,36,37,10],
+  ["1999-01-13",9,14,15,17,24,18],
+  ["1999-01-17",13,23,24,28,37,11],
+  ["1999-01-20",8,17,22,36,40,1],
+  ["1999-01-24",18,24,25,28,39,4],
+  ["1999-01-27",9,10,15,28,31,9],
+  ["1999-01-31",22,25,26,29,37,9],
+  ["1999-02-03",2,4,6,24,32,14],
+  ["1999-02-07",5,13,14,37,40,13],
+  ["1999-02-10",1,5,20,23,37,2],
+  ["1999-02-14",14,19,26,31,44,3],
+  ["1999-02-17",10,19,24,34,45,20],
+  ["1999-02-21",15,26,28,41,42,7],
+  ["1999-02-24",15,26,34,36,40,9],
+  ["1999-02-28",21,27,32,34,41,8],
+  ["1999-03-03",3,7,25,29,36,16],
+  ["1999-03-07",4,16,18,24,38,1],
+  ["1999-03-10",20,29,41,43,44,13],
+  ["1999-03-14",9,10,12,20,32,1],
+  ["1999-03-17",12,18,19,22,25,13],
+  ["1999-03-21",3,6,12,14,27,3],
+  ["1999-03-24",18,19,30,34,43,19],
+  ["1999-03-28",2,12,27,36,41,6],
+  ["1999-03-31",5,13,18,19,37,3],
+  ["1999-04-04",17,19,24,29,35,9],
+  ["1999-04-07",21,27,28,33,35,4],
+  ["1999-04-10",5,8,19,25,45,19],
+  ["1999-04-14",18,25,36,40,44,9],
+  ["1999-04-18",2,20,25,27,39,12],
+  ["1999-04-21",13,14,17,19,43,16],
+  ["1999-04-25",10,19,32,33,34,15],
+  ["1999-04-28",13,15,26,28,43,12],
+  ["1999-05-01",7,8,18,25,40,6],
+  ["1999-05-05",3,19,23,39,40,16],
+  ["1999-05-09",6,23,25,29,40,13],
+  ["1999-05-12",14,31,37,39,42,11],
+  ["1999-05-16",14,16,26,29,45,9],
+  ["1999-05-19",10,33,43,44,45,10],
+  ["1999-05-23",11,27,29,40,45,14],
+  ["1999-05-26",10,13,16,24,40,8],
+  ["1999-05-30",22,29,31,42,45,2],
+  ["1999-06-02",5,20,22,33,43,6],
+  ["1999-06-06",9,12,16,27,29,6],
+  ["1999-06-09",4,18,25,34,36,3],
+  ["1999-06-13",2,21,35,44,45,15],
+  ["1999-06-16",8,20,31,41,42,5],
+  ["1999-06-20",4,8,21,27,29,6],
+  ["1999-06-23",3,6,9,12,16,18],
+  ["1999-06-27",8,15,21,25,36,8],
+  ["1999-06-30",11,14,16,37,43,14],
+  ["1999-07-04",8,17,18,19,43,16],
+  ["1999-07-07",6,18,22,24,36,14],
+  ["1999-07-11",3,5,6,21,35,11],
+  ["1999-07-14",5,22,23,25,28,8],
+  ["1999-07-18",7,15,23,34,40,13],
+  ["1999-07-21",18,29,33,34,36,13],
+  ["1999-07-25",1,6,15,17,42,20],
+  ["1999-07-28",4,5,17,22,26,4],
+  ["1999-08-01",7,16,24,40,41,6],
+  ["1999-08-04",3,23,38,39,41,2],
+  ["1999-08-08",9,13,21,26,41,6],
+  ["1999-08-11",2,16,20,23,35,5],
+  ["1999-08-18",2,16,19,31,43,9],
+  ["1999-08-22",5,13,29,35,43,12],
+  ["1999-08-25",5,17,21,24,34,9],
+  ["1999-08-29",5,10,11,12,23,2],
+  ["1999-09-01",7,17,22,24,25,8],
+  ["1999-09-05",8,23,31,33,39,15],
+  ["1999-09-08",1,7,12,28,34,5],
+  ["1999-09-12",10,18,19,26,38,7],
+  ["1999-09-15",6,26,28,39,44,1],
+  ["1999-09-19",2,11,20,32,42,16],
+  ["1999-09-22",5,27,34,40,41,9],
+  ["1999-09-26",6,12,14,23,29,3],
+  ["1999-09-29",17,24,26,35,38,3],
+  ["1999-10-03",14,19,25,31,35,12],
+  ["1999-10-06",5,8,17,20,31,5],
+  ["1999-10-10",11,19,21,27,38,6],
+  ["1999-10-13",2,8,24,35,42,15],
+  ["1999-10-17",7,10,19,39,40,13],
+  ["1999-10-20",2,10,14,30,44,13],
+  ["1999-10-24",7,10,14,26,44,16],
+  ["1999-10-27",6,19,25,38,40,2],
+  ["1999-10-31",19,24,25,30,42,20],
+  ["1999-11-03",3,7,12,23,41,20],
+  ["1999-11-07",2,18,28,33,42,12],
+  ["1999-11-10",2,9,12,33,35,16],
+  ["1999-11-14",1,4,28,34,44,9],
+  ["1999-11-17",5,20,33,35,37,2],
+  ["1999-11-21",5,8,13,21,36,2],
+  ["1999-11-24",8,15,16,20,33,6],
+  ["1999-11-28",6,12,17,21,33,6],
+  ["1999-12-01",7,10,14,33,41,18],
+  ["1999-12-05",1,5,33,42,44,5],
+  ["1999-12-08",10,23,30,34,35,16],
+  ["1999-12-12",4,5,10,29,36,12],
+  ["1999-12-15",7,19,27,29,43,10],
+  ["1999-12-19",6,11,25,37,39,17],
+  ["1999-12-22",1,7,22,30,34,4],
+  ["1999-12-25",19,21,37,44,45,10],
+  ["1999-12-29",10,15,24,30,31,3]
+].map(([drawTime,a,b,c,d,e,joker])=>
+  ({drawNo:0,drawTime,numbers:[a,b,c,d,e],joker}));
+const ARCHIVE_PAGE_SIZE=100;
+const athensCalendar=new Intl.DateTimeFormat("sv-SE",{
+  timeZone:"Europe/Athens",year:"numeric",month:"2-digit",day:"2-digit"
+});
+
 let draws=[];
+let archiveLimit=ARCHIVE_PAGE_SIZE;
+let historyTask=null;
+let coverage=null;
+
+try{
+  coverage=JSON.parse(localStorage.getItem(COVERAGE_STORE)||"null");
+}catch(e){
+  coverage=null;
+}
 
 try{
   const saved=JSON.parse(localStorage.getItem(STORE)||"[]");
   if(Array.isArray(saved)) draws=saved.map(normalize).filter(Boolean);
 }catch(e){
   draws=[];
-}
-
-function save(){
-  localStorage.setItem(STORE,JSON.stringify(draws));
 }
 
 function normalize(o){
@@ -234,9 +482,18 @@ function compareDraws(a,b){
   return ad-bd;
 }
 
+function calendarDay(value){
+  const date=String(value);
+  const local=date.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:$|\s)/);
+  if(local)return [local[3],local[2].padStart(2,"0"),local[1].padStart(2,"0")].join("-");
+  if(/^\d{4}-\d{2}-\d{2}$/.test(date))return date;
+  const parsed=parseDate(value);
+  return parsed?athensCalendar.format(parsed):"";
+}
+
 function fmt(value){
-  const d=parseDate(value);
-  return d?d.toLocaleDateString("el-GR"):"—";
+  const date=calendarDay(value);
+  return date?date.split("-").reverse().join("/"):"—";
 }
 
 function balls(a,j){
@@ -259,19 +516,43 @@ function render(){
 
   renderStats();
 
-  const recent=draws.slice()
-    .sort((a,b)=>compareDraws(b,a))
-    .slice(0,20);
+  renderArchive();
+}
 
-  $("recent").innerHTML=recent.length
-    ?recent.map(d=>`
+function renderArchive(){
+  const select=$("archiveYear");
+  const selected=select.value;
+  const ordered=draws.map(draw=>({draw,date:calendarDay(draw.drawTime)}))
+    .sort((a,b)=>b.date.localeCompare(a.date)||compareDraws(b.draw,a.draw));
+  const years=new Set(ordered.map(entry=>entry.date.slice(0,4)).filter(Boolean));
+  select.replaceChildren(new Option("Όλα τα έτη",""),
+    ...Array.from(years,year=>new Option(year,year)));
+  select.value=years.has(selected)?selected:"";
+
+  const filtered=select.value
+    ?ordered.filter(entry=>entry.date.startsWith(select.value+"-"))
+    :ordered;
+  const visible=filtered.slice(0,archiveLimit);
+  $("archiveShown").textContent=`Εμφανίζονται ${visible.length} από ${filtered.length} αποθηκευμένες κληρώσεις.`;
+  $("moreDraws").hidden=visible.length===filtered.length;
+  $("recent").innerHTML=visible.length
+    ?visible.map(({draw:d,date})=>`
       <div class="combo">
-        <b>Κλήρωση ${d.drawNo}</b>
-        <span class="muted">${fmt(d.drawTime)}</span>
+        <b>${d.drawNo>0?`Κλήρωση ${d.drawNo}`:"Κλήρωση"}</b>
+        <span class="muted">${fmt(date)}</span>
         ${balls(d.numbers,d.joker)}
       </div>`).join("")
-    :"Δεν υπάρχουν ακόμη δεδομένα.";
+    :"Δεν υπάρχουν αποθηκευμένες κληρώσεις για αυτή την επιλογή.";
 }
+
+$("archiveYear").onchange=()=>{
+  archiveLimit=ARCHIVE_PAGE_SIZE;
+  renderArchive();
+};
+$("moreDraws").onclick=()=>{
+  archiveLimit+=ARCHIVE_PAGE_SIZE;
+  renderArchive();
+};
 
 /* Διαγνωστική ενότητα ιστορικού */
 function renderArchiveDiagnostics(){
@@ -426,10 +707,9 @@ function mergeDraws(list){
 
   function drawKey(d){
     const no=Number(d.drawNo);
-    if(no>0)return "N:"+no;
-    const parsed=parseDate(d.drawTime);
-    const dateKey=parsed?parsed.toISOString().slice(0,10):String(d.drawTime||"");
-    return "D:"+dateKey;
+    const dateKey=calendarDay(d.drawTime)||d.drawTime;
+    if(no>0&&(!dateKey||dateKey>=OPAP_HISTORY_START))return "N:"+no;
+    return "D:"+dateKey+"|"+key(d);
   }
 
   for(const d of draws){
@@ -446,14 +726,19 @@ function mergeDraws(list){
     }
   }
 
-  draws=Array.from(map.values()).sort(compareDraws);
-  if(added)save();
+  if(added){
+    const updated=Array.from(map.values()).sort(compareDraws);
+    localStorage.setItem(STORE,JSON.stringify(updated));
+    draws=updated;
+  }
   return added;
 }
 
 /* Συγχρονισμός πρόσφατων αποτελεσμάτων */
 async function syncRecent(){
   $("sync").disabled=true;
+  $("historySync").disabled=true;
+  $("checkMy").disabled=true;
   $("status").textContent="Γίνεται έλεγχος των τελευταίων ολοκληρωμένων κληρώσεων…";
 
   try{
@@ -506,6 +791,8 @@ async function syncRecent(){
     $("status").textContent="Αποτυχία ελέγχου: "+(e.message||"Άγνωστο σφάλμα");
   }finally{
     $("sync").disabled=false;
+    $("historySync").disabled=false;
+    $("checkMy").disabled=false;
   }
 }
 
@@ -520,130 +807,110 @@ function addDays(date,days){
   return d;
 }
 
-/* Λήψη ιστορικού */
-async function syncHistory(){
-  if(!confirm("Να ξεκινήσει η προσπάθεια λήψης του ιστορικού από το 1997; Η διαδικασία μπορεί να διαρκέσει αρκετά.")){
-    return;
-  }
-
-  $("historySync").disabled=true;
-  $("sync").disabled=true;
-
-  let totalAdded=0;
-  let totalRead=0;
-  let totalValid=0;
-  let failedWindows=0;
-
-  try{
-    const start=new Date(Date.UTC(1997,10,16));
-    const today=new Date();
-    const end=new Date(Date.UTC(today.getFullYear(),today.getMonth(),today.getDate()));
-
-    let from=new Date(start);
-
-    while(from<=end){
-      const to=addDays(from,89);
-      const finalTo=to>end?end:to;
-
-      const fromStr=isoDate(from);
-      const toStr=isoDate(finalTo);
-
-      $("status").textContent=
-        `Λήψη ιστορικού: ${fromStr} έως ${toStr}\n`+
-        `Αποθηκευμένες κληρώσεις: ${draws.length}`;
-
-      let page=0;
-      let windowFailed=false;
-
-      while(true){
-        const url=
-          `https://api.opap.gr/draws/v3.0/5104/draw-date/${fromStr}/${toStr}`+
-          `?status=results&page=${page}&limit=180&sort=asc`;
-
-        let body;
-
-        try{
-          body=await getJSON(url);
-        }catch(e){
-          windowFailed=true;
-          $("status").textContent=
-            `Πρόβλημα λήψης στο διάστημα ${fromStr} έως ${toStr}.\n`+
-            `${e.message||e}`;
-          break;
-        }
-
-        let arr;
-
-        try{
-          arr=extractArray(body);
-        }catch(e){
-          windowFailed=true;
-          $("status").textContent=
-            `Μη αναγνωρίσιμη απάντηση για ${fromStr} έως ${toStr}.`;
-          break;
-        }
-
-        totalRead+=arr.length;
-
-        const valid=arr.map(parseDraw).filter(Boolean);
-        totalValid+=valid.length;
-
-        if(arr.length>0 && valid.length===0){
-          windowFailed=true;
-          $("status").textContent=
-            "Η πηγή επέστρεψε εγγραφές, αλλά δεν αναγνωρίστηκαν οι κληρώσεις. Η λήψη σταματά για αυτό το διάστημα.";
-          break;
-        }
-
-        if(valid.length!==arr.length){
-          windowFailed=true;
-        }
-
-        totalAdded+=mergeDraws(valid);
-        render();
-
-        if(arr.length===0)break;
-
-        const totalPages=Number(body.totalPages);
-        if(Number.isFinite(totalPages)&&totalPages>0){
-          page++;
-          if(page>=totalPages)break;
-        }else{
-          if(arr.length<180)break;
-          page++;
-        }
-
-        if(page>100)break;
+async function readHistoryWindow(from,to){
+  const collected=new Map();
+  for(let page=0;page<100;page++){
+    const url=`https://api.opap.gr/draws/v3.0/5104/draw-date/${from}/${to}`+
+      `?status=results&page=${page}&limit=180&sort=asc`;
+    const body=await getJSON(url);
+    const entries=extractArray(body).filter(entry=>
+      String(entry?.status??entry?.draw?.status??"").toLowerCase()!=="active");
+    const sizeBefore=collected.size;
+    for(const entry of entries){
+      const draw=parseDraw(entry);
+      const date=draw&&calendarDay(draw.drawTime);
+      if(!date||date<from||date>to){
+        throw new Error("Μη έγκυρη κλήρωση στο διάστημα.");
       }
-
-      if(windowFailed)failedWindows++;
-
-      from=addDays(finalTo,1);
+      collected.set(draw.drawNo>0?"N:"+draw.drawNo:date+"|"+key(draw),draw);
     }
 
-    render();
+    const pages=Number(body.totalPages);
+    const hasMore=Number.isInteger(pages)&&pages>0?page+1<pages:entries.length>=180;
+    if(page>0&&entries.length&&collected.size===sizeBefore){
+      throw new Error("Η πηγή επανέλαβε την ίδια σελίδα αποτελεσμάτων.");
+    }
+    if(!hasMore)return Array.from(collected.values());
+    if(!entries.length)throw new Error("Λείπει σελίδα αποτελεσμάτων.");
+  }
+  throw new Error("Η πηγή επέστρεψε υπερβολικά πολλές σελίδες.");
+}
 
-    $("status").textContent=
-      `Η διαδικασία λήψης ολοκληρώθηκε.\n`+
-      `Εγγραφές που επέστρεψε η πηγή: ${totalRead}\n`+
-      `Κληρώσεις που αναγνωρίστηκαν: ${totalValid}\n`+
-      `Νέες κληρώσεις που αποθηκεύτηκαν: ${totalAdded}\n`+
-      `Σύνολο αποθηκευμένων: ${draws.length}\n`+
-      `Διαστήματα με σφάλμα: ${failedWindows}\n\n`+
-      (failedWindows===0
-        ?"Δεν αναφέρθηκαν αποτυχίες στα διαστήματα που ελέγχθηκαν. Αυτό δεν αποτελεί ανεξάρτητη πιστοποίηση πληρότητας του αρχείου."
-        :"Η λήψη δεν ήταν πλήρης. Μπορείς να ξαναδοκιμάσεις ή να εισαγάγεις ιστορικό CSV.");
+function syncHistory(full=false){
+  if(historyTask)return historyTask;
+  historyTask=downloadHistory(full).finally(()=>{historyTask=null;});
+  return historyTask;
+}
 
-  }catch(e){
-    $("status").textContent="Σφάλμα ιστορικού: "+(e.message||e);
+async function downloadHistory(full){
+  $("historySync").disabled=true;
+  $("sync").disabled=true;
+  const today=athensCalendar.format(new Date());
+  const canResume=coverage?.through>=OPAP_HISTORY_START&&coverage.through<=today&&draws.length>=coverage.count;
+  const start=full||!canResume?OPAP_HISTORY_START:coverage.through;
+  const end=new Date(today+"T00:00:00Z");
+  let added=0;
+  const failed=[];
+
+  try{
+    added+=mergeDraws(EARLY_DRAWS);
+    for(let from=new Date(start+"T00:00:00Z");from<=end;){
+      const limit=addDays(from,89);
+      const to=limit>end?end:limit;
+      const first=isoDate(from);
+      const last=isoDate(to);
+      $("status").textContent=`Έλεγχος αρχείου ΟΠΑΠ: ${fmt(first)} έως ${fmt(last)}…`;
+
+      try{
+        const list=await readHistoryWindow(first,last);
+        if(!list.length&&to-from>=7*86400000){
+          throw new Error("Η πηγή δεν επέστρεψε κληρώσεις.");
+        }
+        added+=mergeDraws(list);
+      }catch(error){
+        failed.push(`${fmt(first)}–${fmt(last)}: ${error.message}`);
+      }
+      from=addDays(to,1);
+    }
+
+    if(!failed.length){
+      const ids=new Set(draws.filter(draw=>draw.drawNo>0&&
+        calendarDay(draw.drawTime)>=OPAP_HISTORY_START).map(draw=>draw.drawNo));
+      if(!ids.size){
+        failed.push("Λείπουν οι αριθμημένες κληρώσεις του ΟΠΑΠ.");
+      }else{
+        const orderedIds=Array.from(ids).sort((a,b)=>a-b);
+        const gap=orderedIds.findIndex((id,index)=>id!==index+1);
+        if(gap>=0)failed.push(`Λείπει η αριθμημένη κλήρωση ΟΠΑΠ #${gap+1} από το αρχείο.`);
+      }
+    }
+
+    if(!failed.length){
+      const verified={through:today,count:draws.length};
+      localStorage.setItem(COVERAGE_STORE,JSON.stringify(verified));
+      coverage=verified;
+      localStorage.setItem(SYNC_STORE,new Date().toISOString());
+      localStorage.setItem(AUTO_STORE,new Date().toDateString());
+    }else if(full){
+      coverage=null;
+      localStorage.removeItem(COVERAGE_STORE);
+    }
+    $("status").textContent=failed.length
+      ?`Ο έλεγχος του αρχείου έχει ${failed.length} μη επιβεβαιωμένα διαστήματα. Νέες κληρώσεις: ${added}.\n${failed.slice(0,5).join("\n")}`
+      :`Ελέγχθηκε το αρχείο κληρώσεων από 16/11/1997 έως ${fmt(today)}. Νέες κληρώσεις: ${added}.`;
+    return failed.length===0;
+  }catch(error){
+    $("status").textContent="Σφάλμα ιστορικού: "+error.message;
+    return false;
   }finally{
+    render();
     $("historySync").disabled=false;
     $("sync").disabled=false;
   }
 }
 
 /* Προσωπικές επιλογές 5+1 */
-function checkMyNumbers(){
+async function checkMyNumbers(){
  const nums=Array.from({length:5},(_,i)=>Number($("my"+(i+1)).value));
  const joker=Number($("myJ1").value);
 
@@ -655,12 +922,27 @@ function checkMyNumbers(){
  }
 
  nums.sort((a,b)=>a-b);
+ $("checkMy").disabled=true;
+ $("myResult").textContent="Ενημερώνεται το αρχείο ΟΠΑΠ πριν από τον έλεγχο της στήλης…";
+ let covered;
+ try{
+   covered=await syncHistory();
+ }finally{
+   $("checkMy").disabled=false;
+ }
+
  if(!draws.length){
    $("myResult").textContent="Χρειάζεται ιστορικό κληρώσεων για να ελέγξεις τη στήλη. Κόστος στήλης 5+1: 1 €.";
    return;
  }
 
- const ordered=draws.slice().sort((a,b)=>compareDraws(b,a));
+ const dated=draws.map(draw=>({draw,date:calendarDay(draw.drawTime)}))
+   .sort((a,b)=>b.date.localeCompare(a.date)||compareDraws(b.draw,a.draw));
+ const ordered=dated.map(entry=>entry.draw);
+ const dates=dated.map(entry=>entry.date).filter(Boolean);
+ const coverageMessage=covered
+   ?`Ελέγχθηκε το αρχείο κληρώσεων από 16/11/1997 έως ${fmt(coverage.through)}.`
+   :"Υπάρχουν διαστήματα για τα οποία η κάλυψη δεν έχει επιβεβαιωθεί. Το 0 αφορά μόνο τις αποθηκευμένες κληρώσεις.";
 
  const ns=nums.map(n=>{
    const a=ordered.filter(d=>d.numbers.includes(n));
@@ -689,6 +971,8 @@ function checkMyNumbers(){
 
  let html=`
  <b>Έλεγχος επιλογής 5+1 σε ${ordered.length.toLocaleString("el-GR")} κληρώσεις</b>
+ <p>${coverageMessage}</p>
+ <p>Αποθηκευμένες ημερομηνίες κληρώσεων: ${dates.length?`${fmt(dates[dates.length-1])} έως ${fmt(dates[0])}`:"—"}.</p>
  <p><b>Βασικοί:</b> ${nums.join(" - ")}</p>
  <p><b>Τζόκερ:</b> ${joker}</p>
  <h3>Ιστορικό 5 βασικών αριθμών</h3>
@@ -717,7 +1001,11 @@ function checkMyNumbers(){
  html+=`</table>
  <h3>Σύνοψη</h3>
  <p>Κληρώσεις με τον αριθμό Τζόκερ: <strong>${jHits}</strong></p>
- <p>Ακριβείς εμφανίσεις της στήλης 5+1 στο ιστορικό: <strong>${full}</strong></p>
+ <p><strong>${full
+   ?`Η ακριβής στήλη 5+1 έχει κληρωθεί ${full} φορ${full===1?"ά":"ές"}.`
+   :covered
+     ?"Η ακριβής στήλη 5+1 δεν βρέθηκε στο ελεγμένο ιστορικό."
+     :"Η ακριβής στήλη 5+1 δεν βρέθηκε στις αποθηκευμένες κληρώσεις."}</strong></p>
  <p><strong>Κόστος απλής στήλης 5+1: 1 €.</strong></p>`;
 
  if(full){
@@ -1059,15 +1347,22 @@ $("csv").onchange=async e=>{
 };
 
 $("sync").onclick=syncRecent;
-$("historySync").onclick=syncHistory;
+$("historySync").onclick=()=>syncHistory(true);
 $("checkMy").onclick=checkMyNumbers;
 
-/* Αυτόματος έλεγχος μία φορά την ημέρα όταν ανοίγει η εφαρμογή */
+/* Το συμπληρωματικό αρχείο είναι διαθέσιμο με το άνοιγμα της εφαρμογής. */
+try{
+  mergeDraws(EARLY_DRAWS);
+}catch(error){
+  $("status").textContent="Αδυναμία αποθήκευσης του συμπληρωματικού αρχείου: "+error.message;
+}
 render();
 
 if(localStorage.getItem(AUTO_STORE)!==new Date().toDateString()){
-  syncRecent();
+  if(coverage)syncHistory();
+  else syncRecent();
 }
 </script>
 </body>
 </html>
+
