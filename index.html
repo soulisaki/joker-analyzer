@@ -54,6 +54,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:8px 16px 25px
 .ai-metric span{font-size:11px;color:var(--muted)}
 .ai-pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#203047;color:#cfe3f3;font-size:11px;margin:2px}
 @media(max-width:420px){.ai-controls{grid-template-columns:1fr}}
+.exact-match-found{color:#ff6666;font-weight:800}
 </style>
 </head>
 <body>
@@ -997,8 +998,7 @@ async function checkMyNumbers(){
    return;
  }
 
- const dated=draws.map(draw=>({draw,date:calendarDay(draw.drawTime)}))
-   .sort((a,b)=>b.date.localeCompare(a.date)||compareDraws(b.draw,a.draw));
+ const dated=draws.map(draw=>({draw,date:calendarDay(draw.drawTime)}))   .sort((a,b)=>b.date.localeCompare(a.date)||compareDraws(b.draw,a.draw));
  const ordered=dated.map(entry=>entry.draw);
  const dates=dated.map(entry=>entry.date).filter(Boolean);
  const coverageMessage=covered
@@ -1062,7 +1062,7 @@ async function checkMyNumbers(){
  html+=`</table>
  <h3>Σύνοψη</h3>
  <p>Κληρώσεις με τον αριθμό Τζόκερ: <strong>${jHits}</strong></p>
- <p><strong>${full
+ <p><strong class="${full ? 'exact-match-found' : ''}">${full
    ?`Η ακριβής στήλη 5+1 έχει κληρωθεί ${full} φορ${full===1?"ά":"ές"}.`
    :covered
      ?"Η ακριβής στήλη 5+1 δεν βρέθηκε στο ελεγμένο ιστορικό."
